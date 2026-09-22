@@ -30,19 +30,18 @@ git push -u origin main
 
 #### Bước 3: Cấu hình Build Settings trên Cloudflare Pages
 Tại màn hình cài đặt:
-- **Project name**: Đặt tên dự án (ví dụ: `ky-dao-tien-duyen`). Trang web của bạn sẽ có tên miền mặc định là `https://<ten-du-an>.pages.dev`.
+- **Project name**: Đặt tên dự án (ví dụ: `ky-dao-tien-duyen`). Trang web sẽ có tên miền mặc định là `https://<ten-du-an>.pages.dev`.
 - **Production branch**: `main`
-- **Framework preset**: Chọn **Next.js**
+- **Framework preset**: Chọn **None** (hoặc **Next.js (Static HTML Export)**)
 - **Build command**: 
   ```bash
-  npx @cloudflare/next-on-pages
+  npm run build
   ```
-  *(Hoặc `npm run build` nếu xuất static)*
 - **Build output directory**: 
   ```
-  .vercel/output/static
+  out
   ```
-  *(Nếu xuất static `output: 'export'` thì để là `out`)*
+  *(⚠️ **LƯU Ý QUAN TRỌNG**: Dự án đã được cấu hình `output: 'export'` sẵn trong `next.config.ts`. Khi build, toàn bộ file trang web sẽ được tạo ra trong thư mục `out`. TUYỆT ĐỐI KHÔNG điền là `.next` vì trong `.next` có chứa file cache webpack `0.pack` nặng 39MB sẽ bị Cloudflare chặn lỗi > 25MB! Điền `out` là hoàn tất 100%!).*
 
 #### Bước 4: Thiết lập Biến Môi Trường & Compatibility Flag
 Nhấn vào mục **Environment variables (advanced)** và thêm:
