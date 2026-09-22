@@ -1,0 +1,6 @@
+{
+  "name": "Tiên Kỳ Đạo - Cờ Tướng Tu Tiên",
+  "description": "Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ, ghép trận elo, hiệu ứng kỹ năng bắt quân, cửa hàng Tiên Các, khung viền avatar tuỳ chỉnh, Pháp Tướng hiển linh và hệ thống Quản Trị Viên quản lý tài khoản.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
