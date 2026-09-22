@@ -121,6 +121,7 @@ export default function LobbyView({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'chat' | 'online'>('chat');
+  const [mobileLobbyTab, setMobileLobbyTab] = useState<'rooms' | 'community'>('rooms');
 
   // Form states for creating room
   const [roomName, setRoomName] = useState(`Bàn Cờ Của ${user.daoName}`);
@@ -315,10 +316,36 @@ export default function LobbyView({
         </div>
       </div>
 
+      {/* Mobile Tab Switcher (Visible on mobile/tablet < lg) */}
+      <div className="lg:hidden flex items-center p-1 bg-[#0d1424] border border-slate-800 rounded-xl shadow-md">
+        <button
+          onClick={() => setMobileLobbyTab('rooms')}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            mobileLobbyTab === 'rooms'
+              ? 'bg-amber-500 text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Swords className="w-3.5 h-3.5" />
+          <span>Bàn Cờ Sảnh Chờ ({filteredRooms.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileLobbyTab('community')}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            mobileLobbyTab === 'community'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>Đàm Đạo & Tu Chân</span>
+        </button>
+      </div>
+
       {/* Main Grid: Left Rooms List (8 cols), Right Chat & Stats (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Room Lobby & Search (8 cols) */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className={`lg:col-span-8 space-y-4 ${mobileLobbyTab === 'rooms' ? 'block' : 'hidden lg:block'}`}>
           {/* Filter tabs & Search row */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#0d1322]/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl">
             {/* Filter Pills */}
@@ -487,7 +514,7 @@ export default function LobbyView({
         </div>
 
         {/* Right Column: World Chat & Your Cultivation Progress (4 cols) */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className={`lg:col-span-4 space-y-4 ${mobileLobbyTab === 'community' ? 'block' : 'hidden lg:block'}`}>
           {/* Your Quick Cultivation Card with Glowing Frame */}
           <div className="rounded-xl border border-amber-500/30 bg-[#0d1424]/95 p-4 relative overflow-hidden shadow-xl">
             <div className="flex items-center gap-3">

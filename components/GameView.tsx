@@ -56,6 +56,7 @@ import { soundManager } from '../lib/audio/soundFx';
 import { UserAccount } from '../lib/storage/userStore';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import JadeChessboard from './JadeChessboard';
+import AvatarWithFrame from './AvatarWithFrame';
 
 interface GameViewProps {
   room: GameRoom;
@@ -634,20 +635,14 @@ export default function GameView({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              {/* Glowing Avatar */}
-              <div
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 flex-shrink-0"
-                style={{
-                  borderColor: opponentPlayer.frameColor,
-                  boxShadow: `0 0 16px ${opponentPlayer.frameColor}80`,
-                }}
-              >
-                <img
-                  src={opponentPlayer.avatarUrl}
-                  alt={opponentPlayer.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              {/* Perfectly Centered Avatar with Cultivation Frame */}
+              <AvatarWithFrame
+                avatarUrl={opponentPlayer.avatarUrl}
+                daoName={opponentPlayer.name}
+                realmLevel={opponentPlayer.realmLevel || 2}
+                size="sm"
+                isOnline={true}
+              />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs sm:text-sm font-bold text-slate-200 truncate">
@@ -933,16 +928,15 @@ export default function GameView({
             }`}
           >
             <div className="flex items-center gap-2.5">
-              {/* Glowing Avatar */}
-              <div
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 flex-shrink-0"
-                style={{
-                  borderColor: myPlayer.frameColor,
-                  boxShadow: `0 0 16px ${myPlayer.frameColor}80`,
-                }}
-              >
-                <img src={myPlayer.avatarUrl} alt={myPlayer.name} className="w-full h-full object-cover" />
-              </div>
+              {/* Perfectly Centered Avatar with Cultivation Frame */}
+              <AvatarWithFrame
+                avatarUrl={myPlayer.avatarUrl}
+                daoName={myPlayer.name}
+                realmLevel={myPlayer.realmLevel || currentUser.realmLevel}
+                frameId={currentUser.selectedFrameId}
+                size="sm"
+                isOnline={true}
+              />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs sm:text-sm font-bold text-slate-200 truncate">
@@ -990,6 +984,69 @@ export default function GameView({
                 <span>{formatTime(myPlayer.side === 'red' ? redTime : blackTime)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Mobile Quick Action Buttons bar (visible on small screens) */}
+          <div className="lg:hidden w-full max-w-[560px] grid grid-cols-4 gap-1.5 pt-1 text-xs">
+            <button
+              onClick={handleOfferDraw}
+              disabled={gameOver}
+              className="py-2 px-1 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-300 font-medium flex items-center justify-center gap-1 active:bg-slate-800 disabled:opacity-40"
+              title="Cầu Hòa"
+            >
+              <Handshake className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-[11px] truncate">Cầu Hòa</span>
+            </button>
+            <button
+              onClick={handleResign}
+              disabled={gameOver}
+              className="py-2 px-1 rounded-lg bg-rose-950/70 border border-rose-500/40 text-rose-300 font-medium flex items-center justify-center gap-1 active:bg-rose-900 disabled:opacity-40"
+              title="Nhận Thua"
+            >
+              <Flag className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span className="text-[11px] truncate">Nhận Thua</span>
+            </button>
+            {opponentPlayer.isAi ? (
+              <>
+                <button
+                  onClick={handleGetHint}
+                  disabled={gameOver || currentTurn !== mySide}
+                  className="py-2 px-1 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 font-medium flex items-center justify-center gap-1 active:bg-amber-500/25 disabled:opacity-40"
+                  title="Gợi Ý Nước Đi"
+                >
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="text-[11px] truncate">Gợi Ý</span>
+                </button>
+                <button
+                  onClick={handleTakeback}
+                  disabled={gameOver || moveHistory.length < 2}
+                  className="py-2 px-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-medium flex items-center justify-center gap-1 active:bg-slate-700 disabled:opacity-40"
+                  title="Đi Lại"
+                >
+                  <Repeat className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                  <span className="text-[11px] truncate">Đi Lại</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setBoardZoom((z) => (z >= 1.25 ? 1.0 : z + 0.1))}
+                  className="py-2 px-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-medium flex items-center justify-center gap-1"
+                  title="Phóng To Bàn Cờ"
+                >
+                  <ZoomIn className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-[11px] truncate">Zoom</span>
+                </button>
+                <button
+                  onClick={() => setFlipped((f) => !f)}
+                  className="py-2 px-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-medium flex items-center justify-center gap-1"
+                  title="Lật Bàn Cờ"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="text-[11px] truncate">Lật Bàn</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 

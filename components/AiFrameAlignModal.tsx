@@ -385,46 +385,57 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
                   {/* Render AvatarWithFrame */}
                   <div className="relative">
                     {frameImage ? (
-                      <div className="relative flex items-center justify-center">
-                        <div
-                          className={`relative rounded-full overflow-hidden transition-all ${
-                            previewSize === 'sm'
-                              ? 'w-8 h-8'
-                              : previewSize === 'md'
-                              ? 'w-11 h-11'
-                              : previewSize === 'lg'
-                              ? 'w-16 h-16'
-                              : previewSize === '2xl'
-                              ? 'w-24 h-24'
-                              : 'w-20 h-20'
-                          }`}
-                          style={{
-                            boxShadow: `0 0 16px ${glowColor}66`,
-                            borderColor: glowColor,
-                          }}
-                        >
-                          <img
-                            src={user.avatarUrl}
-                            alt="preview"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                      (() => {
+                        const previewPx =
+                          previewSize === 'sm'
+                            ? 36
+                            : previewSize === 'md'
+                            ? 48
+                            : previewSize === 'lg'
+                            ? 64
+                            : previewSize === '2xl'
+                            ? 104
+                            : 80;
+                        const ratio = previewPx / 80;
+                        const curTx = Math.round(offsetX * ratio);
+                        const curTy = Math.round(offsetY * ratio);
 
-                        {/* Overlaid frame with exact alignment */}
-                        <div
-                          className="absolute inset-0 pointer-events-none flex items-center justify-center transition-transform duration-100"
-                          style={{
-                            transform: `scale(${scale}) translate(${offsetX}px, ${offsetY}px)`,
-                          }}
-                        >
-                          <img
-                            src={frameImage}
-                            alt="preview-frame"
-                            className="w-full h-full object-contain"
-                            style={{ filter: `drop-shadow(0 0 10px ${glowColor})` }}
-                          />
-                        </div>
-                      </div>
+                        return (
+                          <div
+                            className="relative flex items-center justify-center shrink-0 select-none"
+                            style={{ width: `${previewPx}px`, height: `${previewPx}px` }}
+                          >
+                            <div
+                              className="relative w-full h-full rounded-full aspect-square overflow-hidden ring-2 ring-white/10"
+                              style={{
+                                boxShadow: `0 0 16px ${glowColor}66`,
+                                borderColor: glowColor,
+                              }}
+                            >
+                              <img
+                                src={user.avatarUrl}
+                                alt="preview"
+                                className="w-full h-full object-cover pointer-events-none block"
+                              />
+                            </div>
+
+                            {/* Overlaid frame with exact alignment */}
+                            <div
+                              className="absolute inset-0 pointer-events-none flex items-center justify-center origin-center transition-transform duration-100 z-10"
+                              style={{
+                                transform: `scale(${scale}) translate(${curTx}px, ${curTy}px)`,
+                              }}
+                            >
+                              <img
+                                src={frameImage}
+                                alt="preview-frame"
+                                className="w-full h-full object-contain pointer-events-none block"
+                                style={{ filter: `drop-shadow(0 0 10px ${glowColor})` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()
                     ) : (
                       <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 text-center p-2">
                         <Shield className="w-6 h-6 mb-1 opacity-50" />

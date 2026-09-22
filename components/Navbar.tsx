@@ -61,25 +61,37 @@ export default function Navbar({
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-base sm:text-lg font-bold tracking-wide bg-gradient-to-r from-amber-200 via-amber-400 to-rose-300 bg-clip-text text-transparent font-serif">
                 Tiên Kỳ Đạo
               </span>
-              <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono font-medium">
-                v1.3 Quản Trị
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono font-bold shadow-sm">
+                v1.3.0
               </span>
               {/* Online Users Pill in Header */}
               <div
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-semibold shadow-sm"
+                className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-[10px] font-mono font-semibold shadow-sm"
                 title="Số đạo hữu hiện đang trực tuyến tu đạo"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_#34d399]" />
-                <span>{onlineCount || 1} Online</span>
+                <span className="hidden xs:inline">{onlineCount || 1} Online</span>
+                <span className="xs:hidden">{onlineCount || 1}</span>
               </div>
             </div>
-            <p className="text-[10px] sm:text-xs text-slate-400 truncate max-w-[140px] sm:max-w-none">
-              Cờ Tướng Tu Chân Trực Tuyến
-            </p>
+            {/* Subtitle with mobile realm & stones indicator */}
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] sm:text-xs text-slate-400 truncate max-w-[110px] sm:max-w-none">
+                Cờ Tướng Tu Chân
+              </p>
+              {/* Mobile Quick Stones Badge */}
+              <div
+                onClick={onOpenShop || onOpenProfile}
+                className="md:hidden flex items-center gap-1 px-1.5 py-0.2 rounded bg-cyan-950/60 border border-cyan-500/30 text-[10px] font-mono text-cyan-300 cursor-pointer active:scale-95 transition-transform"
+              >
+                <span>💎</span>
+                <span className="font-bold">{user.spiritStones.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
         </div>
 

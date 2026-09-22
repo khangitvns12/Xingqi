@@ -881,6 +881,19 @@ export interface PatchNote {
 
 export const GAME_PATCH_NOTES: PatchNote[] = [
   {
+    version: 'v1.3.0',
+    releaseDate: '2026-09-22',
+    title: 'Đại Đạo Quy Nhất - Chuẩn Hóa Mobile & Khung Avatar',
+    status: 'released',
+    highlights: [
+      'Căn chỉnh chính xác tuyệt đối Avatar & Khung Viền: Loại bỏ hoàn toàn lỗi lệch tâm, đồng bộ scale và offset chuẩn xác ở mọi kích thước (SM, MD, LG, XL, 2XL).',
+      'Tối ưu chuẩn HTML5 Mobile & Viewport: Thích ứng hoàn hảo mọi thiết bị iOS & Android, safe area insets, touch target tiêu chuẩn ≥44px.',
+      'Bàn cờ Tiên Ngọc mượt mà trên di động: Khắc phục thanh cuộn, chống giật lác khi pinch-to-zoom và lật bàn cờ.',
+      'Nâng cấp Tiên Các & Bảng Quản Trị Viên: Hỗ trợ nạp Linh Thạch, mua sắm Khung Tiên và Pháp Tướng thần thông.',
+      'Tối ưu kích thước gói build tĩnh tương thích hoàn hảo Cloudflare Pages & Vercel.',
+    ],
+  },
+  {
     version: 'v1.2.0',
     releaseDate: '2026-09-20',
     title: 'Tiên Duyên Khởi Sự - Kỳ Đạo Tái Khởi',
@@ -892,18 +905,6 @@ export const GAME_PATCH_NOTES: PatchNote[] = [
       'Giao diện Profile với khung hào quang phát sáng xoay chuyển theo cảnh giới.',
       'Bảng Vàng Phong Thần (Leaderboard) theo dõi thứ hạng thiên kiêu tam giới.',
       'Tối ưu hóa đa nền tảng PC & Mobile với bàn cờ tỷ lệ chuẩn mượt mà.',
-    ],
-  },
-  {
-    version: 'v1.3.0',
-    releaseDate: 'Dự kiến 10/2026',
-    title: 'Đại Chiến Tông Môn & Cờ Thế Thượng Cổ',
-    status: 'upcoming',
-    highlights: [
-      'Chế độ Bang Hội Tông Môn: Thách đấu lãnh địa giữa các tiên môn.',
-      'Thần Binh Bàn Cờ: Mở khóa bàn cờ Ngọc Bích Thượng Cổ, Bát Quái Đồ.',
-      'Phó bản Phá Cờ Thế: 50+ ván cờ tàn danh gia tu tiên để nhận Linh Thạch & Đan Dược hiếm.',
-      'Chế độ Voice Chat Đàm Đạo Tiên Giới trực tiếp trong bàn đấu.',
     ],
   },
   {
