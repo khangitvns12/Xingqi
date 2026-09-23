@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   loadServerCloudStore,
   upsertAccountInServer,
+  batchUpsertAccountsInServer,
   upsertFramesInServer,
   upsertDharmaInServer,
   upsertArtifactsInServer,
@@ -214,8 +215,8 @@ export async function POST(req: NextRequest) {
         if (payload?.systemConfig) {
           updateSystemConfigInServer(payload.systemConfig);
         }
-        if (Array.isArray(payload?.accounts)) {
-          payload.accounts.forEach((acc: any) => upsertAccountInServer(acc));
+        if (Array.isArray(payload?.accounts) && payload.accounts.length > 0) {
+          batchUpsertAccountsInServer(payload.accounts);
         }
 
         const freshStore = loadServerCloudStore();

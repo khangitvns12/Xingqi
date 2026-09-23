@@ -7,7 +7,7 @@ import {
   SEED_ACCOUNTS,
   SystemConfig,
   DEFAULT_SYSTEM_CONFIG,
-} from '../storage/userStore';
+} from '../storage/userTypes';
 import {
   CustomFrame,
   DharmaIdol,
@@ -17,7 +17,7 @@ import {
   DEFAULT_DHARMA_IDOLS,
   DEFAULT_ARTIFACTS,
   DEFAULT_CUSTOM_TITLES,
-} from '../cultivation/shopAndFrames';
+} from '../cultivation/shopTypes';
 import { readEncryptedFile, writeEncryptedFile } from './encryptedDb';
 
 export interface CloudStoreData {
@@ -81,7 +81,6 @@ export function loadServerCloudStore(): CloudStoreData {
         // Save to encrypted db immediately
         saveServerCloudStore(memoryStore);
         try {
-          // Backup legacy file as .bak
           fs.renameSync(LEGACY_DATA_FILE, `${LEGACY_DATA_FILE}.migrated.bak`);
         } catch {
           // ignore
@@ -99,12 +98,16 @@ export function loadServerCloudStore(): CloudStoreData {
 }
 
 function ensureRequiredDefaults(store: CloudStoreData): void {
-  // Ensure Admin and Default user exist
-  const hasAdmin = store.accounts.some((a) => a.id === ADMIN_USER.id || a.username === ADMIN_USER.username);
-  if (!hasAdmin) store.accounts.unshift(ADMIN_USER);
+  // Ensure Admin and Default user exist ONLY if not already present
+  const hasAdmin = store.accounts.some((a) => a.id === ADMIN_USER.id || a.username.toLowerCase() === ADMIN_USER.username.toLowerCase());
+  if (!hasAdmin) {
+    store.accounts.unshift({ ...ADMIN_USER });
+  }
 
-  const hasDefault = store.accounts.some((a) => a.id === DEFAULT_USER.id || a.username === DEFAULT_USER.username);
-  if (!hasDefault) store.accounts.push(DEFAULT_USER);
+  const hasDefault = store.accounts.some((a) => a.id === DEFAULT_USER.id || a.username.toLowerCase() === DEFAULT_USER.username.toLowerCase());
+  if (!hasDefault) {
+    store.accounts.push({ ...DEFAULT_USER });
+  }
 
   // Ensure systemConfig exists
   if (!store.systemConfig || typeof store.systemConfig.defaultElo !== 'number') {
@@ -139,28 +142,64 @@ export function upsertAccountInServer(account: UserAccount): UserAccount {
     (a) => a.id === account.id || a.username.toLowerCase() === account.username.toLowerCase()
   );
 
+  const updatedAccount: UserAccount = {
+    ...(index >= 0 ? store.accounts[index] : {}),
+    ...account,
+    updatedAt: account.updatedAt || Date.now(),
+    lastActive: Date.now(),
+  };
+
   if (index >= 0) {
-    store.accounts[index] = {
-      ...store.accounts[index],
-      ...account,
-      lastActive: Date.now(),
-    };
+    store.accounts[index] = updatedAccount;
   } else {
-    store.accounts.push({
-      ...account,
-      lastActive: Date.now(),
-    });
+    store.accounts.push(updatedAccount);
   }
 
   saveServerCloudStore(store);
-  return store.accounts[index >= 0 ? index : store.accounts.length - 1];
+  return updatedAccount;
+}
+
+export function batchUpsertAccountsInServer(accounts: UserAccount[]): UserAccount[] {
+  const store = loadServerCloudStore();
+  const map = new Map<string, UserAccount>();
+
+  store.accounts.forEach((a) => {
+    map.set(a.id, a);
+    map.set(a.username.toLowerCase(), a);
+  });
+
+  accounts.forEach((acc) => {
+    const existing = map.get(acc.id) || map.get(acc.username.toLowerCase());
+    const merged: UserAccount = {
+      ...(existing || {}),
+      ...acc,
+      updatedAt: acc.updatedAt || Date.now(),
+      lastActive: Date.now(),
+    };
+    map.set(acc.id, merged);
+  });
+
+  // Unique list by id
+  const dedupedMap = new Map<string, UserAccount>();
+  Array.from(map.values()).forEach((acc) => dedupedMap.set(acc.id, acc));
+
+  store.accounts = Array.from(dedupedMap.values());
+  saveServerCloudStore(store);
+  return store.accounts;
 }
 
 export function upsertFramesInServer(frames: CustomFrame[]): CustomFrame[] {
   const store = loadServerCloudStore();
   const map = new Map<string, CustomFrame>();
   store.customFrames.forEach((f) => map.set(f.id, f));
-  frames.forEach((f) => map.set(f.id, f));
+  frames.forEach((f) => {
+    const existing = map.get(f.id);
+    map.set(f.id, {
+      ...(existing || {}),
+      ...f,
+      updatedAt: f.updatedAt || Date.now(),
+    });
+  });
 
   store.customFrames = Array.from(map.values());
   saveServerCloudStore(store);
@@ -171,7 +210,14 @@ export function upsertDharmaInServer(idols: DharmaIdol[]): DharmaIdol[] {
   const store = loadServerCloudStore();
   const map = new Map<string, DharmaIdol>();
   store.dharmaIdols.forEach((d) => map.set(d.id, d));
-  idols.forEach((d) => map.set(d.id, d));
+  idols.forEach((d) => {
+    const existing = map.get(d.id);
+    map.set(d.id, {
+      ...(existing || {}),
+      ...d,
+      updatedAt: d.updatedAt || Date.now(),
+    });
+  });
 
   store.dharmaIdols = Array.from(map.values());
   saveServerCloudStore(store);
@@ -182,7 +228,14 @@ export function upsertArtifactsInServer(artifacts: CustomArtifact[]): CustomArti
   const store = loadServerCloudStore();
   const map = new Map<string, CustomArtifact>();
   store.customArtifacts.forEach((a) => map.set(a.id, a));
-  artifacts.forEach((a) => map.set(a.id, a));
+  artifacts.forEach((a) => {
+    const existing = map.get(a.id);
+    map.set(a.id, {
+      ...(existing || {}),
+      ...a,
+      updatedAt: a.updatedAt || Date.now(),
+    });
+  });
 
   store.customArtifacts = Array.from(map.values());
   saveServerCloudStore(store);
@@ -193,7 +246,14 @@ export function upsertTitlesInServer(titles: CustomTitle[]): CustomTitle[] {
   const store = loadServerCloudStore();
   const map = new Map<string, CustomTitle>();
   store.customTitles.forEach((t) => map.set(t.id, t));
-  titles.forEach((t) => map.set(t.id, t));
+  titles.forEach((t) => {
+    const existing = map.get(t.id);
+    map.set(t.id, {
+      ...(existing || {}),
+      ...t,
+      updatedAt: t.updatedAt || Date.now(),
+    });
+  });
 
   store.customTitles = Array.from(map.values());
   saveServerCloudStore(store);
