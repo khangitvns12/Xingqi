@@ -19,8 +19,8 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
   const [glowColor, setGlowColor] = useState<string>('#f59e0b');
   const [description, setDescription] = useState<string>('');
   
-  // Alignment metrics
-  const [scale, setScale] = useState<number>(1.40);
+  // Alignment metrics - calibrated so frame sits cleanly ON THE OUTSIDE of the avatar
+  const [scale, setScale] = useState<number>(1.15);
   const [offsetX, setOffsetX] = useState<number>(0);
   const [offsetY, setOffsetY] = useState<number>(0);
 
@@ -62,8 +62,8 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
       if (data.explanation) setAiExplanation(data.explanation);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Không thể kết nối AI';
-      setAiExplanation(`Tự động canh chỉnh dự phòng: Đã căn giữa tâm khung viền (${msg}).`);
-      setScale(1.40);
+      setAiExplanation(`Tự động canh chỉnh dự phòng: Đã căn giữa tâm khung viền bên ngoài avatar (${msg}).`);
+      setScale(1.15);
       setOffsetX(0);
       setOffsetY(0);
     } finally {
@@ -266,32 +266,35 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
                   </span>
                   <button
                     onClick={() => {
-                      setScale(1.40);
+                      setScale(1.15);
                       setOffsetX(0);
                       setOffsetY(0);
                     }}
                     className="text-[10px] text-slate-400 hover:text-amber-300 flex items-center gap-1"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    <span>Mặc định</span>
+                    <span>Mặc định (1.15x)</span>
                   </button>
                 </div>
 
                 {/* Scale Slider */}
                 <div>
                   <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="text-slate-300">Tỉ Lệ Phóng Đại (Scale):</span>
+                    <span className="text-slate-300">Độ Rộng Khung Viền Ngoài (Scale):</span>
                     <span className="font-mono text-amber-400 font-bold">{scale.toFixed(2)}x</span>
                   </div>
                   <input
                     type="range"
-                    min="1.10"
-                    max="1.85"
+                    min="0.85"
+                    max="1.60"
                     step="0.01"
                     value={scale}
                     onChange={(e) => setScale(parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
                   />
+                  <span className="text-[10px] text-slate-400 block mt-0.5">
+                    Khung viền ôm bên ngoài avatar, avatar nằm trọn vẹn sáng rõ bên trong.
+                  </span>
                 </div>
 
                 {/* Offset X Slider */}
@@ -405,10 +408,11 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
                             className="relative flex items-center justify-center shrink-0 select-none"
                             style={{ width: `${previewPx}px`, height: `${previewPx}px` }}
                           >
+                            {/* Inner Avatar: Centered inside frame aperture (74% diameter) */}
                             <div
-                              className="relative w-full h-full rounded-full aspect-square overflow-hidden ring-2 ring-white/10"
+                              className="absolute inset-0 m-auto w-[74%] h-[74%] rounded-full aspect-square overflow-hidden ring-1 ring-white/20 z-0"
                               style={{
-                                boxShadow: `0 0 16px ${glowColor}66`,
+                                boxShadow: `0 0 12px ${glowColor}44`,
                                 borderColor: glowColor,
                               }}
                             >
@@ -419,7 +423,7 @@ export default function AiFrameAlignModal({ user, onClose, onSaveFrame }: AiFram
                               />
                             </div>
 
-                            {/* Overlaid frame with exact alignment */}
+                            {/* Overlaid frame ON THE OUTSIDE of the avatar */}
                             <div
                               className="absolute inset-0 pointer-events-none flex items-center justify-center origin-center transition-transform duration-100 z-10"
                               style={{

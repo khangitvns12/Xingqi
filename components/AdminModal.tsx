@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Shield,
   Users,
@@ -24,6 +24,7 @@ import {
   Wand2,
   Gem,
   Award,
+  RefreshCw,
 } from 'lucide-react';
 import {
   loadAllAccounts,
@@ -34,6 +35,7 @@ import {
   kickUserByAdmin,
   deleteUserByAdmin,
   UserAccount,
+  syncUserFromCloud,
 } from '../lib/storage/userStore';
 import {
   CustomFrame,
@@ -48,10 +50,19 @@ import {
   saveCustomArtifacts,
   loadCustomTitles,
   saveCustomTitles,
+  syncItemsFromCloud,
 } from '../lib/cultivation/shopAndFrames';
 import { CULTIVATION_REALMS, getRealmByLevel } from '../lib/cultivation/realms';
 import AvatarWithFrame from './AvatarWithFrame';
 import AiFrameAlignModal from './AiFrameAlignModal';
+
+function generateCustomId(prefix: string): string {
+  return `${prefix}_custom_${Date.now()}`;
+}
+
+function getNowTimestamp(): number {
+  return Date.now();
+}
 
 interface AdminModalProps {
   currentUser: UserAccount;
@@ -65,6 +76,7 @@ export default function AdminModal({
   onAccountUpdated,
 }: AdminModalProps) {
   const [activeTab, setActiveTab] = useState<'users' | 'frames' | 'dharma' | 'artifacts' | 'titles'>('users');
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
 
   // User management state
   const [accounts, setAccounts] = useState<UserAccount[]>(() => loadAllAccounts());
@@ -127,6 +139,34 @@ export default function AdminModal({
   const titleFileInputRef = useRef<HTMLInputElement>(null);
 
   const [showAiFrameModal, setShowAiFrameModal] = useState(false);
+
+  const reloadAllData = () => {
+    setAccounts(loadAllAccounts());
+    setFrames(loadCustomFrames());
+    setDharmaList(loadDharmaIdols());
+    setArtifactList(loadCustomArtifacts());
+    setTitleList(loadCustomTitles());
+    onAccountUpdated();
+  };
+
+  useEffect(() => {
+    Promise.all([syncUserFromCloud(), syncItemsFromCloud()]).then(() => {
+      reloadAllData();
+    });
+  }, []);
+
+  const handleManualCloudSync = async () => {
+    setIsSyncingCloud(true);
+    try {
+      await Promise.all([syncUserFromCloud(), syncItemsFromCloud()]);
+      reloadAllData();
+      showFeedback('Đã đồng bộ toàn bộ dữ liệu Tiên Giới từ Đám Mây thành công!', 'success');
+    } catch {
+      showFeedback('Không thể kết nối máy chủ đồng bộ.', 'error');
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
 
   const showFeedback = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
     setAdminNotice({ type, text });
@@ -215,7 +255,7 @@ export default function AdminModal({
     }
 
     const newFrame: CustomFrame = {
-      id: 'frame_custom_' + Date.now(),
+      id: generateCustomId('frame'),
       name: newFrameName.trim(),
       imageUrl: newFrameImage.trim(),
       price: Number(newFramePrice) || 0,
@@ -223,7 +263,10 @@ export default function AdminModal({
       rarity: newFrameRarity,
       glowColor: newFrameGlow,
       description: newFrameDesc.trim(),
-      createdAt: Date.now(),
+      scale: 1.15,
+      offsetX: 0,
+      offsetY: 0,
+      createdAt: getNowTimestamp(),
     };
 
     const updated = [newFrame, ...frames];
@@ -289,7 +332,7 @@ export default function AdminModal({
     }
 
     const newDharma: DharmaIdol = {
-      id: 'dharma_custom_' + Date.now(),
+      id: generateCustomId('dharma'),
       name: newDharmaName.trim(),
       title: newDharmaTitle.trim(),
       imageUrl: newDharmaImage.trim(),
@@ -299,7 +342,7 @@ export default function AdminModal({
       description: newDharmaDesc.trim(),
       inShop: newDharmaInShop,
       isAnimated: newDharmaAnimated || newDharmaImage.includes('.gif') || newDharmaImage.includes('.webp') || newDharmaImage.startsWith('data:image/gif'),
-      createdAt: Date.now(),
+      createdAt: getNowTimestamp(),
     };
 
     const updated = [newDharma, ...dharmaList];
@@ -362,7 +405,7 @@ export default function AdminModal({
     }
 
     const newArtifact: CustomArtifact = {
-      id: 'artifact_custom_' + Date.now(),
+      id: generateCustomId('artifact'),
       name: newArtifactName.trim(),
       imageUrl: newArtifactImage.trim(),
       auraColor: newArtifactAura,
@@ -373,7 +416,7 @@ export default function AdminModal({
       effect: newArtifactEffect.trim(),
       minRealmLevel: Number(newArtifactMinRealm) || 1,
       isAnimated: newArtifactAnimated || newArtifactImage.includes('.gif') || newArtifactImage.includes('.webp') || newArtifactImage.startsWith('data:image/gif'),
-      createdAt: Date.now(),
+      createdAt: getNowTimestamp(),
     };
 
     const updated = [newArtifact, ...artifactList];
@@ -429,7 +472,7 @@ export default function AdminModal({
     }
 
     const newTitle: CustomTitle = {
-      id: 'title_custom_' + Date.now(),
+      id: generateCustomId('title'),
       name: newTitleName.trim(),
       description: newTitleDesc.trim(),
       unlockedAtRealm: Number(newTitleRealm) || 1,
@@ -439,7 +482,7 @@ export default function AdminModal({
       bgGradient: newTitleBgGradient,
       badgeImageUrl: newTitleBadgeImage.trim() || undefined,
       icon: newTitleIcon.trim() || '👑',
-      createdAt: Date.now(),
+      createdAt: getNowTimestamp(),
     };
 
     const updated = [newTitle, ...titleList];
@@ -488,35 +531,48 @@ export default function AdminModal({
   const bannedCount = accounts.filter((a) => a.isBanned).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4">
-      <div className="w-full max-w-5xl bg-[#0a0f1d] border-2 border-amber-500/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-2 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-5xl bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl shadow-[0_0_50px_rgba(4,28,24,0.9)] overflow-hidden flex flex-col max-h-[94vh] text-emerald-100">
         {/* Admin Header */}
-        <div className="relative bg-gradient-to-r from-purple-950 via-slate-900 to-amber-950 px-4 py-3 sm:px-6 sm:py-4 border-b border-amber-500/30 flex items-center justify-between">
+        <div className="relative bg-[#041d1a] px-4 py-3 sm:px-6 sm:py-4 border-b border-emerald-500/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/30">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-700 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/30">
               <Shield className="w-5 h-5 fill-current" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold font-serif text-slate-100">
+                <h2 className="text-base sm:text-lg font-bold font-xianxia text-white text-glow-jade">
                   Thiên Đạo Chấp Pháp Các
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-bold">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-teal-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
                   ADMIN PANEL
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-emerald-300/70 font-xianxia">
                 Quyền quản trị tối cao: Quản lý đệ tử, ban/kick, duyệt khung viền & pháp tướng Tiên Các
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 text-xl leading-none p-1.5 rounded-lg hover:bg-slate-800"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleManualCloudSync}
+              disabled={isSyncingCloud}
+              className="px-2.5 py-1.5 rounded-lg bg-[#021310] hover:bg-[#062420] text-teal-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Đồng bộ lại toàn bộ dữ liệu khung viền, pháp tướng, đệ tử với đám mây"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline font-xianxia">Đồng Bộ Đám Mây</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="text-emerald-400/80 hover:text-white text-xl leading-none p-1.5 rounded-lg hover:bg-emerald-900/40 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Global Notice bar */}
@@ -969,7 +1025,7 @@ export default function AdminModal({
 
                     {/* Preview Box */}
                     <div className="relative w-28 h-28 flex items-center justify-center rounded-2xl bg-slate-900 border border-slate-800 p-2">
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-slate-600">
+                      <div className="absolute inset-0 m-auto w-[74%] h-[74%] rounded-full overflow-hidden border border-slate-600 z-0">
                         <img
                           src={currentUser.avatarUrl}
                           alt="preview"
@@ -977,7 +1033,7 @@ export default function AdminModal({
                         />
                       </div>
                       {newFrameImage && (
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center scale-[1.42]">
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center scale-[1.15] z-10">
                           <img
                             src={newFrameImage}
                             alt="preview-frame"

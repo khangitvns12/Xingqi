@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Sparkles,
@@ -16,6 +16,7 @@ import {
   LogOut,
   Wand2,
   Gem,
+  RefreshCw,
 } from 'lucide-react';
 import {
   CULTIVATION_REALMS,
@@ -35,6 +36,7 @@ import {
   DharmaIdol,
   CustomArtifact,
   CustomTitle,
+  syncItemsFromCloud,
 } from '../lib/cultivation/shopAndFrames';
 import { soundManager } from '../lib/audio/soundFx';
 import AvatarWithFrame from './AvatarWithFrame';
@@ -65,15 +67,41 @@ export default function ProfileModal({
   const [tempSect, setTempSect] = useState(user.sect);
   const [breakthroughMsg, setBreakthroughMsg] = useState<{ type: 'success' | 'fail'; text: string } | null>(null);
   const [showAiAlignModal, setShowAiAlignModal] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const [allFrames, setAllFrames] = useState<CustomFrame[]>(() => loadCustomFrames());
+  const [allDharma, setAllDharma] = useState<DharmaIdol[]>(() => loadDharmaIdols());
+  const [allArtifacts, setAllArtifacts] = useState<CustomArtifact[]>(() => loadCustomArtifacts());
+  const [allCustomTitles, setAllCustomTitles] = useState<CustomTitle[]>(() => loadCustomTitles());
+
+  const reloadData = () => {
+    setAllFrames(loadCustomFrames());
+    setAllDharma(loadDharmaIdols());
+    setAllArtifacts(loadCustomArtifacts());
+    setAllCustomTitles(loadCustomTitles());
+  };
+
+  useEffect(() => {
+    syncItemsFromCloud().then(() => {
+      reloadData();
+    });
+  }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncItemsFromCloud();
+      reloadData();
+    } catch {
+      // ignore
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const currentRealm = getRealmByLevel(user.realmLevel);
   const nextRealm = getRealmByLevel(user.realmLevel + 1);
   const isMaxRealm = user.realmLevel >= 10;
-
-  const allFrames = loadCustomFrames();
-  const allDharma = loadDharmaIdols();
-  const allArtifacts = loadCustomArtifacts();
-  const allCustomTitles = loadCustomTitles();
 
   const equippedDharma: DharmaIdol | undefined = allDharma.find((d) => d.id === user.selectedDharmaId) || allDharma[0];
   const equippedArtifact: CustomArtifact | undefined = allArtifacts.find((a) => a.id === user.selectedArtifactId);
@@ -168,15 +196,15 @@ export default function ProfileModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4">
-      <div className="w-full max-w-2xl bg-[#0d1424] border-2 border-amber-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl shadow-[0_0_50px_rgba(4,28,24,0.9)] overflow-hidden flex flex-col max-h-[90vh] text-emerald-100">
         {/* Header with Glowing Daoist Banner */}
-        <div className="relative bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-4 sm:p-6 border-b border-amber-500/30 overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+        <div className="relative bg-[#041d1a] p-4 sm:p-6 border-b border-emerald-500/30 overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
 
           {/* Read Only Notice Badge */}
           {isReadOnly && (
-            <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold">
+            <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950 text-teal-300 border border-emerald-500/40 text-[10px] font-bold">
               <span>Đang Xem Hồ Sơ Đạo Hữu</span>
             </div>
           )}
@@ -194,11 +222,11 @@ export default function ProfileModal({
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg sm:text-xl font-bold font-serif text-slate-100">{user.daoName}</h3>
+                  <h3 className="text-lg sm:text-xl font-bold font-xianxia text-white text-glow-jade">{user.daoName}</h3>
                   {!isReadOnly && (
                     <button
                       onClick={() => setIsEditingName(!isEditingName)}
-                      className="p-1 rounded text-slate-400 hover:text-amber-400 transition-colors"
+                      className="p-1 rounded text-emerald-400/80 hover:text-white transition-colors"
                       title="Chỉnh sửa đạo hiệu"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -209,22 +237,22 @@ export default function ProfileModal({
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                         user.isOnline
                           ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                          : 'bg-slate-800 text-slate-400 border-slate-700'
+                          : 'bg-[#021310] text-emerald-600 border-emerald-500/20'
                       }`}
                     >
                       {user.isOnline ? '🟢 Online' : '⚪ Offline'}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-amber-300/90 font-medium">
+                <p className="text-xs text-teal-300/90 font-medium font-xianxia">
                   {DAOIST_TITLES.find((t) => t.id === user.selectedTitleId)?.name || 'Kỳ Đạo Đạo Đồng'}
                 </p>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-emerald-300/70 mt-1">
                   <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${currentRealm.badgeBg}`}>
                     {currentRealm.name}
                   </span>
                   <span>•</span>
-                  <span className="text-amber-400 font-mono font-semibold">{user.elo} ELO</span>
+                  <span className="text-teal-300 font-mono font-semibold">{user.elo} ELO</span>
                   <span>•</span>
                   <span>{user.sect}</span>
                 </div>
@@ -262,6 +290,17 @@ export default function ProfileModal({
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                className="px-2 py-1.5 rounded-lg bg-[#021310] hover:bg-[#062420] text-teal-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Đồng bộ lại khung viền và dữ liệu với đám mây"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline font-xianxia">Đồng Bộ</span>
+              </button>
+
               {isReadOnly && onChallengePlayer && (
                 <button
                   type="button"
@@ -269,7 +308,7 @@ export default function ProfileModal({
                     onClose();
                     onChallengePlayer(user);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                  className="px-3 py-1.5 rounded-xl jade-button-primary text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all font-xianxia"
                   title={`Thách đấu cờ tướng với ${user.daoName}`}
                 >
                   <Swords className="w-3.5 h-3.5" />
@@ -283,7 +322,7 @@ export default function ProfileModal({
                     onClose();
                     onLogout();
                   }}
-                  className="px-2.5 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                  className="px-2.5 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm font-xianxia"
                   title={`Đăng xuất khỏi ${user.daoName}`}
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-400" />
@@ -292,7 +331,7 @@ export default function ProfileModal({
               )}
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-200 text-xl leading-none p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                className="text-emerald-400/80 hover:text-white text-xl leading-none p-1.5 rounded-lg hover:bg-emerald-900/40 transition-colors"
               >
                 ✕
               </button>
@@ -301,13 +340,13 @@ export default function ProfileModal({
 
           {/* Quick edit form */}
           {isEditingName && (
-            <form onSubmit={handleSaveProfileNames} className="mt-3 pt-3 border-t border-slate-700/60 flex flex-wrap gap-2 text-xs">
+            <form onSubmit={handleSaveProfileNames} className="mt-3 pt-3 border-t border-emerald-500/30 flex flex-wrap gap-2 text-xs">
               <input
                 type="text"
                 value={tempDaoName}
                 onChange={(e) => setTempDaoName(e.target.value)}
                 placeholder="Đạo Hiệu Mới"
-                className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-amber-400 flex-1 min-w-[140px]"
+                className="bg-[#021310] border border-emerald-500/40 rounded-lg px-2.5 py-1 text-emerald-100 focus:outline-none focus:border-teal-400 flex-1 min-w-[140px] font-xianxia"
                 required
               />
               <input
@@ -315,11 +354,11 @@ export default function ProfileModal({
                 value={tempSect}
                 onChange={(e) => setTempSect(e.target.value)}
                 placeholder="Tông Môn / Tiên Phái"
-                className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 focus:outline-none focus:border-amber-400 flex-1 min-w-[140px]"
+                className="bg-[#021310] border border-emerald-500/40 rounded-lg px-2.5 py-1 text-emerald-100 focus:outline-none focus:border-teal-400 flex-1 min-w-[140px] font-xianxia"
               />
               <button
                 type="submit"
-                className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
+                className="px-3 py-1 rounded-lg jade-button-primary text-white font-bold font-xianxia"
               >
                 Lưu
               </button>
@@ -328,13 +367,13 @@ export default function ProfileModal({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center border-b border-slate-800 bg-slate-950/60 px-4 text-xs font-semibold overflow-x-auto scrollbar-none">
+        <div className="flex items-center border-b border-emerald-500/25 bg-[#031815] px-4 text-xs font-semibold overflow-x-auto scrollbar-none font-xianxia">
           <button
             onClick={() => setActiveTab('realm')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'realm'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             Cảnh Giới & Đột Phá
@@ -343,8 +382,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('dharma')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'dharma'
-                ? 'border-purple-400 text-purple-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -354,8 +393,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('artifacts')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'artifacts'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             <Gem className="w-3.5 h-3.5" />
@@ -365,8 +404,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('frames')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === 'frames'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
@@ -376,8 +415,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('titles')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'titles'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             Kho Danh Hiệu
@@ -386,8 +425,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('avatars')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'avatars'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             Chân Dung Avatar
@@ -396,8 +435,8 @@ export default function ProfileModal({
             onClick={() => setActiveTab('stats')}
             className={`py-3 px-3 border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'stats'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
             Chiến Tích & Thống Kê
@@ -422,33 +461,33 @@ export default function ProfileModal({
               )}
 
               {/* Current Realm Card */}
-              <div className="p-4 rounded-xl border border-amber-500/30 bg-slate-900/80 space-y-3">
+              <div className="p-4 rounded-xl border border-emerald-500/40 bg-[#062520]/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-slate-400">Cảnh giới hiện tại:</span>
-                    <h4 className="text-base font-bold text-amber-300">{currentRealm.name}</h4>
+                    <span className="text-emerald-300/80">Cảnh giới hiện tại:</span>
+                    <h4 className="text-base font-bold text-white text-glow-jade font-xianxia">{currentRealm.name}</h4>
                   </div>
                   <div className="text-right">
-                    <span className="text-slate-400">Yêu cầu ELO:</span>
-                    <p className="font-mono text-cyan-300 font-bold">{currentRealm.minElo}+ ELO</p>
+                    <span className="text-emerald-300/80">Yêu cầu ELO:</span>
+                    <p className="font-mono text-teal-300 font-bold">{currentRealm.minElo}+ ELO</p>
                   </div>
                 </div>
 
-                <p className="italic text-slate-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                <p className="italic text-emerald-200/80 bg-[#021310]/70 p-2.5 rounded-lg border border-emerald-500/30 font-xianxia">
                   &ldquo;{currentRealm.tagline}&rdquo;
                 </p>
 
                 {/* Progress to next realm */}
                 <div className="space-y-1.5 pt-2">
-                  <div className="flex items-center justify-between text-slate-300">
+                  <div className="flex items-center justify-between text-emerald-200">
                     <span>Tu Vi Tích Lũy:</span>
-                    <span className="font-mono text-amber-300 font-bold">
+                    <span className="font-mono text-teal-300 font-bold">
                       {user.exp} / {currentRealm.requiredExp} Tu Vi
                     </span>
                   </div>
-                  <div className="w-full h-3 rounded-full bg-slate-950 p-0.5 border border-slate-800 overflow-hidden">
+                  <div className="w-full h-3 rounded-full bg-[#021310] p-0.5 border border-emerald-500/40 overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-amber-400 transition-all duration-500"
+                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-200 transition-all duration-500"
                       style={{
                         width: `${Math.min(100, Math.round((user.exp / currentRealm.requiredExp) * 100))}%`,
                       }}
@@ -458,21 +497,21 @@ export default function ProfileModal({
 
                 {/* Breakthrough Action */}
                 {!isReadOnly ? (
-                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800">
-                    <div className="text-slate-400">
-                      Tỷ lệ độ kiếp: <span className="font-bold text-emerald-400">{currentRealm.breakthroughRate}%</span>
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-emerald-500/20">
+                    <div className="text-emerald-300/80 text-xs">
+                      Tỷ lệ độ kiếp: <span className="font-bold text-teal-300">{currentRealm.breakthroughRate}%</span>
                       {(user.pills[currentRealm.pillNeeded] || 0) > 0 && (
-                        <span className="text-cyan-300 ml-1.5">(Có {currentRealm.pillNeeded} +15%)</span>
+                        <span className="text-teal-200 ml-1.5">(Có {currentRealm.pillNeeded} +15%)</span>
                       )}
                     </div>
 
                     <button
                       onClick={handleBreakthrough}
                       disabled={!canBreakthrough}
-                      className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                      className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all font-xianxia ${
                         canBreakthrough
-                          ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 shadow-lg shadow-orange-500/40 animate-pulse'
-                          : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                          ? 'jade-button-primary text-white shadow-lg animate-pulse'
+                          : 'bg-[#021310] text-emerald-600 cursor-not-allowed border border-emerald-500/20'
                       }`}
                     >
                       <Zap className="w-4 h-4 fill-current" />
@@ -480,9 +519,9 @@ export default function ProfileModal({
                     </button>
                   </div>
                 ) : (
-                  <div className="pt-2 flex items-center justify-between border-t border-slate-800 text-slate-400 text-xs">
+                  <div className="pt-2 flex items-center justify-between border-t border-emerald-500/20 text-emerald-300/80 text-xs">
                     <span>Tu vi tích lũy: {user.exp}/{currentRealm.requiredExp} EXP</span>
-                    <span className="font-semibold text-amber-300">Đang tu luyện cảnh giới này</span>
+                    <span className="font-semibold text-teal-300 font-xianxia">Đang tu luyện cảnh giới này</span>
                   </div>
                 )}
               </div>

@@ -1,1 +1,146 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --jade-deep: #031412;
+    --jade-dark: #05211d;
+    --jade-surface: #082d27;
+    --jade-panel: #0a3831;
+    --jade-border: rgba(16, 185, 129, 0.35);
+    --jade-glow: rgba(20, 184, 166, 0.25);
+    --pale-white: #f8fafc;
+    --jade-white: #e6f7f3;
+    --frost-mint: #a7f3d0;
+  }
+
+  body {
+    background-color: #031412;
+    color: #f1fbf8;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(20, 184, 166, 0.16) 0%, rgba(5, 33, 29, 0.8) 45%, #031412 90%),
+      radial-gradient(circle at 10% 30%, rgba(52, 211, 153, 0.07) 0%, transparent 40%),
+      radial-gradient(circle at 90% 70%, rgba(13, 148, 136, 0.08) 0%, transparent 45%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, .font-dao, .font-serif, .font-display {
+    font-family: 'Philosopher', 'Playfair Display', 'Noto Serif', serif;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* Custom Tu Tiên Jade & Pale White Utility Styles */
+.font-xianxia {
+  font-family: 'Philosopher', 'Playfair Display', serif;
+}
+
+.text-jade-glow {
+  text-shadow: 0 0 14px rgba(45, 212, 191, 0.65), 0 0 28px rgba(16, 185, 129, 0.35);
+}
+
+.text-pale-white {
+  color: #f8fafc;
+}
+
+.jade-glass {
+  background: rgba(6, 33, 29, 0.82);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  box-shadow: 0 8px 32px 0 rgba(2, 18, 15, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.jade-glass-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.jade-glass-hover:hover {
+  border-color: rgba(45, 212, 191, 0.6);
+  box-shadow: 0 10px 36px 0 rgba(4, 28, 24, 0.8), 0 0 20px rgba(16, 185, 129, 0.25);
+}
+
+.jade-card {
+  background: linear-gradient(145deg, rgba(8, 41, 36, 0.9) 0%, rgba(4, 25, 22, 0.95) 100%);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(230, 247, 243, 0.12);
+}
+
+.jade-button-primary {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #047857 100%);
+  color: #ffffff;
+  border: 1px solid rgba(167, 243, 208, 0.5);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: all 0.25s ease;
+}
+.jade-button-primary:hover {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #059669 100%);
+  box-shadow: 0 0 26px rgba(45, 212, 191, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.jade-button-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e6f7f3;
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+}
+.jade-button-secondary:hover {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: rgba(45, 212, 191, 0.6);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(20, 184, 166, 0.25);
+}
+
+.daoist-badge {
+  background: rgba(4, 30, 26, 0.85);
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  color: #a7f3d0;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+/* Xianxia Cultivation Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #02110f;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #0d9488, #059669);
+  border-radius: 9999px;
+  border: 1px solid rgba(167, 243, 208, 0.3);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #14b8a6, #10b981);
+}
+
+/* Animations for Qi & Ethereal Mist */
+@keyframes ethereal-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.02);
+  }
+}
+
+.animate-ethereal-pulse {
+  animation: ethereal-pulse 4s ease-in-out infinite;
+}
+
+@keyframes jade-spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-jade-spin-slow {
+  animation: jade-spin-slow 24s linear infinite;
+}

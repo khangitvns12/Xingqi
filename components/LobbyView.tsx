@@ -243,34 +243,34 @@ export default function LobbyView({
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
-      {/* Top Banner / Tu Tiên Aura Showcase */}
-      <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-[#121829] via-[#0f172a] to-[#1e152e] p-4 sm:p-7 shadow-2xl shadow-amber-950/20">
+      {/* Top Banner / Tu Tiên Aura Showcase in Jade & Pale White */}
+      <div className="relative overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-[#062c26] via-[#041d1a] to-[#021311] p-4 sm:p-7 shadow-[0_0_40px_rgba(4,28,24,0.8)] text-emerald-100">
         {/* Background Daoist Array ambient graphics */}
-        <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
-        <div className="absolute right-10 top-1/2 -translate-y-1/2 text-9xl font-serif text-amber-500/5 select-none pointer-events-none hidden md:block">
+        <div className="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-teal-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute right-10 top-1/2 -translate-y-1/2 text-9xl font-xianxia text-emerald-500/10 select-none pointer-events-none hidden md:block">
           棋
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
-                <span>Cửu Châu Tiên Kỳ Giới • Sảnh Chờ Luận Đạo</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 text-xs font-semibold shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-300 animate-spin" style={{ animationDuration: '8s' }} />
+                <span className="font-xianxia font-bold tracking-wide">Cửu Châu Tiên Kỳ Giới • Sảnh Chờ Luận Đạo</span>
               </div>
               <div
                 id="lobby-online-badge"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs font-semibold shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#052420] border border-emerald-500/40 text-emerald-300 text-xs font-semibold shadow-sm"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_6px_#2dd4bf]" />
                 <span>Đang Trực Tuyến: <strong className="text-white font-mono">{onlineCount || 18}</strong> Đạo Hữu</span>
               </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-serif text-slate-100 tracking-tight">
-              Thao Túng Thiên Bàn, <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-rose-400 bg-clip-text text-transparent">Chứng Đạo Tiên Kỳ</span>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-xianxia text-white tracking-tight text-glow-jade">
+              Thao Túng Thiên Bàn, <span className="bg-gradient-to-r from-emerald-200 via-teal-300 to-white bg-clip-text text-transparent">Chứng Đạo Tiên Kỳ</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-emerald-200/80 max-w-2xl leading-relaxed">
               Mỗi nước cờ là một bước tu chân. Ghép trận theo ELO, bắt quân tung chiêu thức ngũ hành lôi hỏa, tích lũy tu vi phá kiếp thăng tiên trên Phong Thần Bảng!
             </p>
           </div>
@@ -280,18 +280,18 @@ export default function LobbyView({
             {/* Rapid ELO Matchmaking Button */}
             <button
               onClick={onStartMatchmaking}
-              className="w-full sm:w-auto flex-1 sm:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 font-bold text-sm shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full sm:w-auto flex-1 sm:flex-none px-5 py-3 rounded-xl jade-button-primary font-xianxia font-bold text-sm shadow-[0_0_20px_rgba(16,185,129,0.35)] flex items-center justify-center gap-2.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              <Zap className="w-5 h-5 text-slate-950 fill-current animate-bounce" />
+              <Zap className="w-5 h-5 text-emerald-100 fill-current animate-bounce" />
               <span>Ghép Nhanh Theo ELO</span>
             </button>
 
             {/* Create Room Button */}
             <button
               onClick={() => setShowCreateModal(true)}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-amber-300 border border-amber-500/40 hover:border-amber-400 font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-md"
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#062420] hover:bg-[#0a3832] text-emerald-200 border border-emerald-400/50 hover:border-emerald-300 font-xianxia font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-md"
             >
-              <PlusCircle className="w-4 h-4 text-amber-400" />
+              <PlusCircle className="w-4 h-4 text-emerald-300" />
               <span>Tạo Bàn Cờ</span>
             </button>
 
@@ -304,11 +304,11 @@ export default function LobbyView({
                   setShowAiModal(true);
                 }
               }}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-gradient-to-r from-purple-950 via-indigo-950 to-purple-900 hover:from-purple-900 hover:to-indigo-900 text-purple-200 border border-purple-500/50 hover:border-purple-400 font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-950/40 group"
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-teal-950/70 hover:bg-teal-900/80 text-teal-200 border border-teal-500/50 hover:border-teal-300 font-xianxia font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-950/40 group"
             >
-              <Bot className="w-4 h-4 text-purple-300 group-hover:scale-110 transition-transform" />
+              <Bot className="w-4 h-4 text-teal-300 group-hover:scale-110 transition-transform" />
               <span>Chơi Với Bot</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-300 border border-purple-500/40 font-mono font-bold">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-500/25 text-teal-200 border border-teal-500/40 font-mono font-bold">
                 Chọn Độ Khó
               </span>
             </button>
@@ -317,13 +317,13 @@ export default function LobbyView({
       </div>
 
       {/* Mobile Tab Switcher (Visible on mobile/tablet < lg) */}
-      <div className="lg:hidden flex items-center p-1 bg-[#0d1424] border border-slate-800 rounded-xl shadow-md">
+      <div className="lg:hidden flex items-center p-1 bg-[#052420] border border-emerald-500/30 rounded-xl shadow-md">
         <button
           onClick={() => setMobileLobbyTab('rooms')}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 font-xianxia ${
             mobileLobbyTab === 'rooms'
-              ? 'bg-amber-500 text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+              : 'text-emerald-300/70 hover:text-white'
           }`}
         >
           <Swords className="w-3.5 h-3.5" />
@@ -331,10 +331,10 @@ export default function LobbyView({
         </button>
         <button
           onClick={() => setMobileLobbyTab('community')}
-          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 font-xianxia ${
             mobileLobbyTab === 'community'
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md'
+              : 'text-emerald-300/70 hover:text-white'
           }`}
         >
           <MessageSquare className="w-3.5 h-3.5" />
@@ -347,45 +347,45 @@ export default function LobbyView({
         {/* Left Column: Room Lobby & Search (8 cols) */}
         <div className={`lg:col-span-8 space-y-4 ${mobileLobbyTab === 'rooms' ? 'block' : 'hidden lg:block'}`}>
           {/* Filter tabs & Search row */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#0d1322]/80 border border-slate-800 p-2 sm:p-2.5 rounded-xl">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#052420]/80 border border-emerald-500/30 p-2 sm:p-2.5 rounded-xl">
             {/* Filter Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               <button
                 onClick={() => setFilterTab('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors font-xianxia ${
                   filterTab === 'all'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                    : 'text-emerald-300/70 hover:text-white hover:bg-emerald-950/60'
                 }`}
               >
                 Tất Cả ({rooms.length})
               </button>
               <button
                 onClick={() => setFilterTab('waiting')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors font-xianxia ${
                   filterTab === 'waiting'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                    : 'text-emerald-300/70 hover:text-white hover:bg-emerald-950/60'
                 }`}
               >
                 Đang Chờ
               </button>
               <button
                 onClick={() => setFilterTab('blitz')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors font-xianxia ${
                   filterTab === 'blitz'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                    : 'text-emerald-300/70 hover:text-white hover:bg-emerald-950/60'
                 }`}
               >
                 Cờ Chớp (≤5p)
               </button>
               <button
                 onClick={() => setFilterTab('ranked')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors font-xianxia ${
                   filterTab === 'ranked'
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-emerald-600 text-white font-bold shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                    : 'text-emerald-300/70 hover:text-white hover:bg-emerald-950/60'
                 }`}
               >
                 Tính ELO
@@ -394,13 +394,13 @@ export default function LobbyView({
 
             {/* Search Input */}
             <div className="relative min-w-[180px]">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400" />
               <input
                 type="text"
                 placeholder="Tìm bàn cờ, đạo hữu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/70"
+                className="w-full bg-[#031815] border border-emerald-500/40 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400"
               />
             </div>
           </div>
@@ -408,12 +408,12 @@ export default function LobbyView({
           {/* Room Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {filteredRooms.length === 0 ? (
-              <div className="col-span-full py-12 text-center rounded-xl border border-dashed border-slate-800 bg-[#0d1322]/40 text-slate-400 space-y-3">
-                <Swords className="w-8 h-8 text-slate-600 mx-auto" />
-                <p className="text-sm">Chưa có bàn cờ nào phù hợp bộ lọc.</p>
+              <div className="col-span-full py-12 text-center rounded-xl border border-dashed border-emerald-500/30 bg-[#052420]/40 text-emerald-300/80 space-y-3">
+                <Swords className="w-8 h-8 text-emerald-400 mx-auto" />
+                <p className="text-sm font-xianxia">Chưa có bàn cờ nào phù hợp bộ lọc.</p>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="px-4 py-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-semibold hover:bg-amber-500/30 transition-colors"
+                  className="px-4 py-2 rounded-xl jade-button-primary text-xs font-bold font-xianxia shadow"
                 >
                   Tạo Bàn Cờ Mới
                 </button>
@@ -424,23 +424,23 @@ export default function LobbyView({
                 return (
                   <div
                     key={room.id}
-                    className="relative group rounded-xl border border-slate-800 hover:border-amber-500/50 bg-[#0d1424]/90 p-4 transition-all duration-200 hover:shadow-xl hover:shadow-black/60 flex flex-col justify-between"
+                    className="relative group rounded-xl border border-emerald-500/30 hover:border-teal-400 bg-[#062420]/90 p-4 transition-all duration-200 hover:shadow-xl hover:shadow-emerald-950/60 flex flex-col justify-between"
                   >
                     {/* Top status line */}
                     <div className="flex items-start justify-between gap-2 mb-2.5">
                       <div className="flex-1">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="text-sm font-bold text-slate-200 group-hover:text-amber-300 transition-colors line-clamp-1">
+                          <h3 className="text-sm font-bold text-white group-hover:text-teal-200 transition-colors line-clamp-1 font-xianxia">
                             {room.name}
                           </h3>
-                          {room.password && <Lock className="w-3 h-3 text-amber-400 flex-shrink-0" />}
+                          {room.password && <Lock className="w-3 h-3 text-teal-300 flex-shrink-0" />}
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <p className="text-[11px] text-emerald-300/70 mt-0.5 flex items-center gap-1">
                           <span>Chủ bàn:</span>
                           <button
                             type="button"
                             onClick={() => handleInspectBySender(room.hostName)}
-                            className="text-amber-400 hover:text-amber-300 font-medium hover:underline cursor-pointer"
+                            className="text-teal-300 hover:text-white font-medium hover:underline cursor-pointer font-xianxia"
                             title="Xem thông tin chi tiết của chủ bàn"
                           >
                             {room.hostName}
@@ -452,7 +452,7 @@ export default function LobbyView({
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap border ${
                           room.status === 'waiting'
-                            ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 animate-pulse'
+                            ? 'bg-emerald-950/80 text-emerald-200 border-emerald-400/50 animate-pulse'
                             : 'bg-rose-950/80 text-rose-300 border-rose-500/40'
                         }`}
                       >
@@ -461,25 +461,25 @@ export default function LobbyView({
                     </div>
 
                     {/* Room Meta Badges */}
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 mb-3.5">
-                      <span className="flex items-center gap-1 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
-                        <Clock className="w-3 h-3 text-cyan-400" />
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-emerald-200/70 mb-3.5">
+                      <span className="flex items-center gap-1 bg-[#031916] px-2 py-0.5 rounded border border-emerald-500/30 text-teal-300">
+                        <Clock className="w-3 h-3 text-teal-400" />
                         {room.timeLimit}p + {room.increment}s
                       </span>
-                      <span className="bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 text-amber-300">
+                      <span className="bg-[#031916] px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-200 font-xianxia font-semibold">
                         {room.hostRealm} ({room.hostElo} ELO)
                       </span>
-                      <span className="flex items-center gap-1 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 text-slate-400">
-                        <Eye className="w-3 h-3 text-purple-400" />
+                      <span className="flex items-center gap-1 bg-[#031916] px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-300">
+                        <Eye className="w-3 h-3 text-teal-400" />
                         {room.spectatorCount} Đạo Hữu
                       </span>
                     </div>
 
                     {/* Action button */}
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                      <div className="text-[11px] text-slate-500">
+                    <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between">
+                      <div className="text-[11px] text-emerald-400/70">
                         {room.isRanked ? (
-                          <span className="text-amber-400/80 font-medium">⚡ Xếp Hạng ELO</span>
+                          <span className="text-teal-300 font-medium">⚡ Xếp Hạng ELO</span>
                         ) : (
                           <span>Giao Hữu Tự Do</span>
                         )}
@@ -487,10 +487,10 @@ export default function LobbyView({
 
                       <button
                         onClick={() => onJoinRoom(room)}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all font-xianxia ${
                           room.status === 'waiting'
-                            ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
-                            : 'bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30'
+                            ? 'jade-button-primary shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                            : 'bg-emerald-950 hover:bg-emerald-900 text-teal-200 border border-teal-500/40'
                         }`}
                       >
                         {room.status === 'waiting' ? (
@@ -515,8 +515,8 @@ export default function LobbyView({
 
         {/* Right Column: World Chat & Your Cultivation Progress (4 cols) */}
         <div className={`lg:col-span-4 space-y-4 ${mobileLobbyTab === 'community' ? 'block' : 'hidden lg:block'}`}>
-          {/* Your Quick Cultivation Card with Glowing Frame */}
-          <div className="rounded-xl border border-amber-500/30 bg-[#0d1424]/95 p-4 relative overflow-hidden shadow-xl">
+          {/* Your Quick Cultivation Card with Glowing Jade Frame */}
+          <div className="rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-[#062c26] via-[#041d1a] to-[#021311] p-4 relative overflow-hidden shadow-[0_0_30px_rgba(4,28,24,0.8)]">
             <div className="flex items-center gap-3">
               {/* Glowing Avatar with Frame */}
               <div
@@ -535,12 +535,12 @@ export default function LobbyView({
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-100 truncate">{user.daoName}</h4>
-                  <span className="text-xs font-mono font-bold text-amber-400">{user.elo} ELO</span>
+                  <h4 className="text-sm font-bold text-white truncate font-xianxia">{user.daoName}</h4>
+                  <span className="text-xs font-mono font-bold text-teal-300">{user.elo} ELO</span>
                 </div>
-                <div className="text-xs text-amber-300/90 font-medium truncate">{activeTitle}</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">{userRealm.name} • {user.sect}</div>
-                <div className="text-[10px] text-cyan-300 font-mono font-bold mt-0.5">
+                <div className="text-xs text-emerald-300/90 font-medium truncate font-xianxia">{activeTitle}</div>
+                <div className="text-[11px] text-emerald-200/70 mt-0.5">{userRealm.name} • {user.sect}</div>
+                <div className="text-[10px] text-teal-300 font-mono font-bold mt-0.5">
                   💎 {user.spiritStones.toLocaleString()} Linh Thạch
                 </div>
               </div>
@@ -549,30 +549,30 @@ export default function LobbyView({
             {/* EXP / Tu Vi Bar */}
             <div className="mt-3 space-y-1">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Tu Vi Cảnh Giới:</span>
-                <span className="font-mono text-cyan-300 font-semibold">
+                <span className="text-emerald-300/70">Tu Vi Cảnh Giới:</span>
+                <span className="font-mono text-teal-300 font-semibold">
                   {user.exp} / {userRealm.requiredExp}
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden p-0.5 border border-slate-800">
+              <div className="w-full h-2 rounded-full bg-[#02110f] overflow-hidden p-0.5 border border-emerald-500/30">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-amber-400 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-white transition-all duration-500 shadow-[0_0_8px_#10b981]"
                   style={{ width: `${Math.min(100, Math.round((user.exp / userRealm.requiredExp) * 100))}%` }}
                 />
               </div>
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="mt-3.5 pt-3 border-t border-slate-800 grid grid-cols-3 text-center text-[11px]">
+            <div className="mt-3.5 pt-3 border-t border-emerald-500/20 grid grid-cols-3 text-center text-[11px]">
               <div>
-                <span className="block text-slate-500">Thắng/Tổng</span>
-                <span className="font-bold text-slate-200">
+                <span className="block text-emerald-400/60 font-medium">Thắng/Tổng</span>
+                <span className="font-bold text-white">
                   {user.stats.wins}/{user.stats.totalMatches}
                 </span>
               </div>
               <div>
-                <span className="block text-slate-500">Tỷ Lệ Thắng</span>
-                <span className="font-bold text-emerald-400">
+                <span className="block text-emerald-400/60 font-medium">Tỷ Lệ Thắng</span>
+                <span className="font-bold text-teal-300">
                   {user.stats.totalMatches > 0
                     ? Math.round((user.stats.wins / user.stats.totalMatches) * 100)
                     : 0}
@@ -580,28 +580,28 @@ export default function LobbyView({
                 </span>
               </div>
               <div>
-                <span className="block text-slate-500">Liên Thắng</span>
-                <span className="font-bold text-amber-400">🔥 {user.stats.winStreak}</span>
+                <span className="block text-emerald-400/60 font-medium">Liên Thắng</span>
+                <span className="font-bold text-emerald-300">🔥 {user.stats.winStreak}</span>
               </div>
             </div>
 
             {/* Quick Shortcuts: Shop and Admin */}
-            <div className="mt-3.5 pt-3 border-t border-slate-800/80 flex items-center gap-2">
+            <div className="mt-3.5 pt-3 border-t border-emerald-500/20 flex items-center gap-2">
               {onOpenShop && (
                 <button
                   onClick={onOpenShop}
-                  className="flex-1 py-1.5 px-2 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-1.5 px-2 rounded-xl bg-teal-950/60 hover:bg-teal-900/80 text-teal-200 border border-teal-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors font-xianxia"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <ShoppingBag className="w-3.5 h-3.5 text-teal-300" />
                   <span>Tiên Các Shop 💎</span>
                 </button>
               )}
               {(user.role === 'admin' || user.username === 'admin') && onOpenAdmin && (
                 <button
                   onClick={onOpenAdmin}
-                  className="flex-1 py-1.5 px-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-400/50 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors font-xianxia"
                 >
-                  <Shield className="w-3.5 h-3.5" />
+                  <Shield className="w-3.5 h-3.5 text-teal-300" />
                   <span>Quản Trị Viên</span>
                 </button>
               )}
@@ -613,7 +613,7 @@ export default function LobbyView({
                 onOpenAuth && (
                   <button
                     onClick={onOpenAuth}
-                    className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20"
+                    className="w-full py-2 px-3 rounded-xl jade-button-primary text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md font-xianxia"
                   >
                     <LogIn className="w-3.5 h-3.5" />
                     <span>Đăng Nhập Lưu Đạo Tịch</span>
@@ -624,16 +624,16 @@ export default function LobbyView({
                   {onOpenAuth && (
                     <button
                       onClick={onOpenAuth}
-                      className="flex-1 py-1.5 px-2 rounded-lg bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors"
+                      className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/30 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors font-xianxia"
                     >
-                      <LogIn className="w-3.5 h-3.5 text-cyan-400" />
+                      <LogIn className="w-3.5 h-3.5 text-teal-400" />
                       <span>Đổi Tài Khoản</span>
                     </button>
                   )}
                   {onLogout && (
                     <button
                       onClick={onLogout}
-                      className="py-1.5 px-2.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/40 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors"
+                      className="py-1.5 px-2.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/40 text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors"
                       title={`Đăng xuất khỏi ${user.daoName}`}
                     >
                       <LogOut className="w-3.5 h-3.5 text-rose-400" />
@@ -645,39 +645,39 @@ export default function LobbyView({
             </div>
           </div>
 
-          {/* World Chat & Online Cultivators Tabbed Box */}
-          <div className="rounded-xl border border-slate-800 bg-[#0d1424]/90 flex flex-col h-[380px] shadow-lg overflow-hidden">
+          {/* World Chat & Online Cultivators Tabbed Box in Jade */}
+          <div className="rounded-2xl border-2 border-emerald-500/30 bg-[#062420]/95 flex flex-col h-[380px] shadow-[0_0_25px_rgba(4,28,24,0.8)] overflow-hidden">
             {/* Tabbed Header */}
-            <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
-              <div className="flex items-center gap-1">
+            <div className="px-3 py-2 border-b border-emerald-500/25 flex items-center justify-between bg-[#041a17]">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setSidebarTab('chat')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer font-xianxia ${
                     sidebarTab === 'chat'
-                      ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                      : 'text-emerald-300/70 hover:text-white'
                   }`}
                 >
-                  <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
+                  <MessageSquare className="w-3.5 h-3.5 text-teal-300" />
                   <span>Truyền Âm</span>
                 </button>
                 <button
                   type="button"
                   id="lobby-online-tab"
                   onClick={() => setSidebarTab('online')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer font-xianxia ${
                     sidebarTab === 'online'
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                      : 'text-emerald-300/70 hover:text-white'
                   }`}
                 >
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  <Users className="w-3.5 h-3.5 text-emerald-300" />
                   <span>Đạo Hữu Online</span>
                 </button>
               </div>
-              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] text-teal-300 flex items-center gap-1 font-mono px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/40">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
                 {onlineCount || Math.max(18, onlineAccounts.length + 18)} Online
               </span>
             </div>
@@ -692,19 +692,21 @@ export default function LobbyView({
                         <button
                           type="button"
                           onClick={() => handleInspectBySender(m.sender, m.avatarUrl, m.realm, m.title)}
-                          className="font-semibold text-amber-300 hover:text-amber-200 text-[11px] truncate max-w-[130px] hover:underline cursor-pointer flex items-center gap-1 text-left"
+                          className="font-semibold text-teal-300 hover:text-white text-[11px] truncate max-w-[130px] hover:underline cursor-pointer flex items-center gap-1 text-left font-xianxia"
                           title="Nhấp để xem hồ sơ của đạo hữu này"
                         >
-                          <Eye className="w-2.5 h-2.5 text-slate-400 opacity-60" />
+                          <Eye className="w-2.5 h-2.5 text-emerald-400/80" />
                           <span>{m.sender}</span>
                         </button>
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-400">
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 font-xianxia">
                           {m.realm}
                         </span>
-                        <span className="text-[9px] text-slate-500 ml-auto">{m.time}</span>
+                        <span className="text-[9px] text-emerald-400/60 ml-auto">{m.time}</span>
                       </div>
-                      <p className={`text-[11px] leading-relaxed rounded-lg p-2 ${
-                        m.isSystem ? 'bg-purple-950/40 text-purple-200 border border-purple-800/40' : 'bg-slate-900/60 text-slate-300'
+                      <p className={`text-[11px] leading-relaxed rounded-xl p-2.5 border ${
+                        m.isSystem
+                          ? 'bg-teal-950/60 text-teal-100 border-teal-500/40 shadow-sm'
+                          : 'bg-[#031815]/80 text-emerald-100 border-emerald-500/20'
                       }`}>
                         {m.message}
                       </p>
@@ -713,17 +715,17 @@ export default function LobbyView({
                 </div>
 
                 {/* Chat Input */}
-                <form onSubmit={handleSendMessage} className="p-2 border-t border-slate-800 bg-slate-900/70 flex gap-1.5">
+                <form onSubmit={handleSendMessage} className="p-2 border-t border-emerald-500/25 bg-[#041a17] flex gap-1.5">
                   <input
                     type="text"
                     value={inputMsg}
                     onChange={(e) => setInputMsg(e.target.value)}
                     placeholder="Nhập truyền âm đàm đạo..."
-                    className="flex-1 bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500/70"
+                    className="flex-1 bg-[#021310] border border-emerald-500/40 rounded-xl px-3 py-1.5 text-xs text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400"
                   />
                   <button
                     type="submit"
-                    className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl jade-button-primary transition-colors cursor-pointer text-white shadow"
                     title="Gửi truyền âm"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -835,16 +837,16 @@ export default function LobbyView({
 
       {/* Modal: Create Custom Room */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-[#0d1424] border border-amber-500/40 rounded-2xl p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl p-5 sm:p-6 shadow-[0_0_40px_rgba(4,28,24,0.9)] space-y-4 text-emerald-100 font-sans">
+            <div className="flex items-center justify-between border-b border-emerald-500/25 pb-3">
               <div className="flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-slate-100">Khai Lập Tiên Bàn</h3>
+                <PlusCircle className="w-5 h-5 text-teal-300" />
+                <h3 className="font-xianxia font-bold text-white text-base">Khai Lập Tiên Bàn</h3>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-200 text-lg leading-none"
+                className="text-emerald-300/70 hover:text-white text-lg leading-none"
               >
                 ✕
               </button>
@@ -852,23 +854,23 @@ export default function LobbyView({
 
             <form onSubmit={handleCreateSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Tên Tiên Bàn</label>
+                <label className="block text-emerald-200/90 font-medium mb-1">Tên Tiên Bàn</label>
                 <input
                   type="text"
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#031815] border border-emerald-500/40 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-400"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">Thời Gian (Phút/Bên)</label>
+                  <label className="block text-emerald-200/90 font-medium mb-1">Thời Gian (Phút/Bên)</label>
                   <select
                     value={roomTime}
                     onChange={(e) => setRoomTime(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-[#031815] border border-emerald-500/40 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-400"
                   >
                     <option value={3}>3 Phút (Cực Chớp)</option>
                     <option value={5}>5 Phút (Cờ Chớp)</option>
@@ -878,11 +880,11 @@ export default function LobbyView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-medium mb-1">Cộng Giây / Nước</label>
+                  <label className="block text-emerald-200/90 font-medium mb-1">Cộng Giây / Nước</label>
                   <select
                     value={roomIncrement}
                     onChange={(e) => setRoomIncrement(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-[#031815] border border-emerald-500/40 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-teal-400"
                   >
                     <option value={0}>+0 giây</option>
                     <option value={3}>+3 giây</option>
@@ -893,13 +895,13 @@ export default function LobbyView({
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Mật Khẩu Bàn (Để trống nếu công khai)</label>
+                <label className="block text-emerald-200/90 font-medium mb-1">Mật Khẩu Bàn (Để trống nếu công khai)</label>
                 <input
                   type="text"
                   placeholder="Không mật khẩu"
                   value={roomPassword}
                   onChange={(e) => setRoomPassword(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#031815] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400"
                 />
               </div>
 
@@ -909,24 +911,24 @@ export default function LobbyView({
                   id="rankedCheck"
                   checked={isRanked}
                   onChange={(e) => setIsRanked(e.target.checked)}
-                  className="rounded border-slate-700 text-amber-500 focus:ring-0"
+                  className="rounded border-emerald-500/40 text-emerald-500 focus:ring-0"
                 />
-                <label htmlFor="rankedCheck" className="text-slate-300 cursor-pointer select-none">
+                <label htmlFor="rankedCheck" className="text-emerald-200 cursor-pointer select-none">
                   Thi Đấu Tính Điểm Xếp Hạng ELO & Tu Vi
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-emerald-500/25">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium"
+                  className="px-4 py-2 rounded-xl bg-emerald-950/70 text-emerald-300 hover:bg-emerald-900 font-medium"
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md shadow-amber-500/30"
+                  className="px-5 py-2 rounded-xl jade-button-primary font-xianxia font-bold shadow-md"
                 >
                   Khai Lập Bàn Cờ
                 </button>
@@ -938,16 +940,16 @@ export default function LobbyView({
 
       {/* Modal: Select AI Cultivator Rival */}
       {showAiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-2xl bg-[#0d1424] border border-purple-500/40 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl p-5 sm:p-6 shadow-[0_0_40px_rgba(4,28,24,0.9)] space-y-4 max-h-[90vh] overflow-y-auto text-emerald-100">
+            <div className="flex items-center justify-between border-b border-emerald-500/25 pb-3">
               <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-purple-400" />
-                <h3 className="font-bold text-slate-100">Chọn Tiên Nhân Khiêu Chiến (Luyện Cờ Với AI)</h3>
+                <Bot className="w-5 h-5 text-teal-300" />
+                <h3 className="font-xianxia font-bold text-white text-base">Chọn Tiên Nhân Khiêu Chiến (Luyện Cờ Với AI)</h3>
               </div>
               <button
                 onClick={() => setShowAiModal(false)}
-                className="text-slate-400 hover:text-slate-200 text-lg leading-none"
+                className="text-emerald-300/70 hover:text-white text-lg leading-none"
               >
                 ✕
               </button>
@@ -957,23 +959,23 @@ export default function LobbyView({
               {AI_CULTIVATOR_RIVALS.map((rival) => (
                 <div
                   key={rival.id}
-                  className="p-3.5 rounded-xl border border-slate-800 hover:border-purple-500/60 bg-slate-900/70 space-y-2.5 flex flex-col justify-between"
+                  className="p-3.5 rounded-xl border border-emerald-500/30 hover:border-teal-400 bg-[#031916]/80 space-y-2.5 flex flex-col justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-11 h-11 rounded-full overflow-hidden border-2"
+                      className="w-11 h-11 rounded-full overflow-hidden border-2 shrink-0"
                       style={{ borderColor: rival.frameColor }}
                     >
                       <img src={rival.avatarUrl} alt={rival.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-200 text-sm">{rival.name}</h4>
-                      <p className="text-[11px] text-amber-300">{rival.realm} • {rival.elo} ELO</p>
-                      <p className="text-[10px] text-slate-400">{rival.sect}</p>
+                      <h4 className="font-bold text-white text-sm font-xianxia">{rival.name}</h4>
+                      <p className="text-[11px] text-teal-300 font-xianxia">{rival.realm} • {rival.elo} ELO</p>
+                      <p className="text-[10px] text-emerald-400/70">{rival.sect}</p>
                     </div>
                   </div>
 
-                  <p className="italic text-[11px] text-slate-400 bg-slate-950/60 p-2 rounded border border-slate-800/80">
+                  <p className="italic text-[11px] text-emerald-200/80 bg-[#02110f] p-2 rounded-lg border border-emerald-500/20 font-xianxia">
                     &ldquo;{rival.quotes.greeting}&rdquo;
                   </p>
 
@@ -982,7 +984,7 @@ export default function LobbyView({
                       setShowAiModal(false);
                       onChallengeAi(rival);
                     }}
-                    className="w-full py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold flex items-center justify-center gap-1.5 shadow"
+                    className="w-full py-2 rounded-xl jade-button-primary font-xianxia font-bold flex items-center justify-center gap-1.5 shadow"
                   >
                     <Swords className="w-3.5 h-3.5" />
                     <span>Luận Đạo Ngay</span>

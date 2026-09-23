@@ -72,6 +72,9 @@ export const DEFAULT_FRAMES: CustomFrame[] = [
     inShop: true,
     rarity: 'Thần Phẩm',
     glowColor: '#f59e0b',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
     description: 'Chế tác từ Thái Cổ Thần Kim, khắc ấn Bát Quái đồ và Kim Long hộ thể tỏa kim quang rực rỡ.',
     createdAt: Date.now() - 86400000 * 10,
   },
@@ -83,6 +86,9 @@ export const DEFAULT_FRAMES: CustomFrame[] = [
     inShop: true,
     rarity: 'Tiên Phẩm',
     glowColor: '#c084fc',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
     description: 'Ngưng tụ từ lôi kiếp Cửu Trọng Thiên, tử điện lấp lánh như sấm sét xé toạc hư không.',
     createdAt: Date.now() - 86400000 * 8,
   },
@@ -94,6 +100,9 @@ export const DEFAULT_FRAMES: CustomFrame[] = [
     inShop: true,
     rarity: 'Cực Phẩm',
     glowColor: '#10b981',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
     description: 'Cánh hoa sen ngọc bích tỏa tiên khí thanh tịnh, dưỡng tâm an thần khi suy tính nước cờ vi diệu.',
     createdAt: Date.now() - 86400000 * 6,
   },
@@ -105,6 +114,9 @@ export const DEFAULT_FRAMES: CustomFrame[] = [
     inShop: true,
     rarity: 'Tiên Phẩm',
     glowColor: '#f43f5e',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
     description: 'Cánh lửa Niết Bàn của Bất Tử Thần Phượng, bùng cháy uy lực khiến đối thủ chấn động tâm can.',
     createdAt: Date.now() - 86400000 * 4,
   },
@@ -116,6 +128,9 @@ export const DEFAULT_FRAMES: CustomFrame[] = [
     inShop: true,
     rarity: 'Thượng Phẩm',
     glowColor: '#38bdf8',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
     description: 'Băng tinh vạn năm ngưng kết từ Bắc Cực Hàn Đàm, sắc bén và lạnh giá đến thấu xương.',
     createdAt: Date.now() - 86400000 * 2,
   },
@@ -300,6 +315,12 @@ export function saveCustomFrames(frames: CustomFrame[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(FRAMES_KEY, JSON.stringify(frames));
+    // Asynchronously push to server cloud store for cross-device sync
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_FRAMES', frames }),
+    }).catch(() => {});
   } catch {
     // fallback
   }
@@ -325,6 +346,12 @@ export function saveDharmaIdols(idols: DharmaIdol[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(DHARMA_KEY, JSON.stringify(idols));
+    // Asynchronously push to server cloud store
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_DHARMA', dharmaIdols: idols }),
+    }).catch(() => {});
   } catch {
     // fallback
   }
@@ -350,6 +377,12 @@ export function saveCustomArtifacts(artifacts: CustomArtifact[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(artifacts));
+    // Asynchronously push to server cloud store
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_ARTIFACTS', artifacts }),
+    }).catch(() => {});
   } catch {
     // fallback
   }
@@ -375,7 +408,72 @@ export function saveCustomTitles(titles: CustomTitle[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
+    // Asynchronously push to server cloud store
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'SYNC_TITLES', titles }),
+    }).catch(() => {});
   } catch {
     // fallback
+  }
+}
+
+/**
+ * Fetch latest items from cloud server and merge into local storage.
+ * Used when app mounts on any device (phone, laptop, tablet).
+ */
+export async function syncItemsFromCloud(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  try {
+    const res = await fetch('/api/sync');
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.success) return false;
+
+    // Merge custom frames
+    if (Array.isArray(data.customFrames) && data.customFrames.length > 0) {
+      const current = loadCustomFrames();
+      const map = new Map<string, CustomFrame>();
+      current.forEach((f) => map.set(f.id, f));
+      data.customFrames.forEach((f: CustomFrame) => map.set(f.id, f));
+      const merged = Array.from(map.values());
+      localStorage.setItem(FRAMES_KEY, JSON.stringify(merged));
+    }
+
+    // Merge dharma idols
+    if (Array.isArray(data.dharmaIdols) && data.dharmaIdols.length > 0) {
+      const current = loadDharmaIdols();
+      const map = new Map<string, DharmaIdol>();
+      current.forEach((d) => map.set(d.id, d));
+      data.dharmaIdols.forEach((d: DharmaIdol) => map.set(d.id, d));
+      const merged = Array.from(map.values());
+      localStorage.setItem(DHARMA_KEY, JSON.stringify(merged));
+    }
+
+    // Merge artifacts
+    if (Array.isArray(data.customArtifacts) && data.customArtifacts.length > 0) {
+      const current = loadCustomArtifacts();
+      const map = new Map<string, CustomArtifact>();
+      current.forEach((a) => map.set(a.id, a));
+      data.customArtifacts.forEach((a: CustomArtifact) => map.set(a.id, a));
+      const merged = Array.from(map.values());
+      localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(merged));
+    }
+
+    // Merge titles
+    if (Array.isArray(data.customTitles) && data.customTitles.length > 0) {
+      const current = loadCustomTitles();
+      const map = new Map<string, CustomTitle>();
+      current.forEach((t) => map.set(t.id, t));
+      data.customTitles.forEach((t: CustomTitle) => map.set(t.id, t));
+      const merged = Array.from(map.values());
+      localStorage.setItem(TITLES_KEY, JSON.stringify(merged));
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('[Sync] Could not pull items from server cloud:', err);
+    return false;
   }
 }

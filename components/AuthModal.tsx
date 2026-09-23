@@ -1,8 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { LogIn, LogOut, UserPlus, Shield, Sparkles, Check } from 'lucide-react';
-import { loadAllAccounts, UserAccount } from '../lib/storage/userStore';
+import { useState, useEffect } from 'react';
+import {
+  LogIn,
+  LogOut,
+  UserPlus,
+  Shield,
+  Sparkles,
+  Check,
+  Cloud,
+  RefreshCw,
+  Scroll,
+  Flame,
+  Crown,
+  KeyRound,
+  UserCheck,
+} from 'lucide-react';
+import { loadAllAccounts, UserAccount, syncUserFromCloud } from '../lib/storage/userStore';
+import { syncItemsFromCloud } from '../lib/cultivation/shopAndFrames';
 
 interface AuthModalProps {
   currentUser: UserAccount;
@@ -28,16 +43,56 @@ export default function AuthModal({
   const [sect, setSect] = useState('Tiên Kỳ Các');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [cloudSynced, setCloudSynced] = useState(false);
+  const [accounts, setAccounts] = useState<UserAccount[]>(() => loadAllAccounts());
 
-  const accounts = loadAllAccounts();
+  // Auto-fetch latest accounts and items from server cloud when opening modal
+  useEffect(() => {
+    let mounted = true;
+    const fetchCloud = async () => {
+      setIsSyncing(true);
+      try {
+        await Promise.all([syncUserFromCloud(), syncItemsFromCloud()]);
+        if (mounted) {
+          setAccounts(loadAllAccounts());
+          setCloudSynced(true);
+        }
+      } catch (e) {
+        console.warn('Sync error in AuthModal:', e);
+      } finally {
+        if (mounted) setIsSyncing(false);
+      }
+    };
+    fetchCloud();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    setErrorMsg('');
+    try {
+      await Promise.all([syncUserFromCloud(), syncItemsFromCloud()]);
+      setAccounts(loadAllAccounts());
+      setCloudSynced(true);
+      setSuccessMsg('Đã đồng bộ dữ liệu Tiên Giới từ máy chủ đám mây thành công!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch {
+      setErrorMsg('Không thể kết nối máy chủ đồng bộ.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
 
     if (!username.trim()) {
-      setErrorMsg('Vui lòng nhập tên tài khoản.');
+      setErrorMsg('Vui lòng nhập tên tài khoản tu chân.');
       return;
     }
 
@@ -47,18 +102,19 @@ export default function AuthModal({
         return;
       }
 
-      // Check if username already exists
+      // Check if username already exists in current list
       const existing = accounts.find((a) => a.username.toLowerCase() === username.trim().toLowerCase());
       if (existing) {
-        setErrorMsg('Tên tài khoản này đã có đạo hữu sử dụng.');
+        setErrorMsg('Tên tài khoản này đã có đạo hữu sử dụng. Vui lòng chọn tên khác.');
         return;
       }
 
       const newAccount: UserAccount = {
         id: 'user_' + Date.now(),
         username: username.trim(),
+        password: password.trim(),
         daoName: daoName.trim(),
-        sect: sect.trim() || 'Tán Tu',
+        sect: sect.trim() || 'Tán Tu Tiên Giới',
         avatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
         elo: 1200,
         realmLevel: 1,
@@ -69,6 +125,9 @@ export default function AuthModal({
         selectedAvatarId: 'av_1',
         unlockedTitleIds: ['title_1'],
         unlockedAvatarIds: ['av_1'],
+        unlockedFrameIds: [],
+        unlockedDharmaIds: [],
+        unlockedArtifactIds: [],
         stats: {
           totalMatches: 0,
           wins: 0,
@@ -81,98 +140,161 @@ export default function AuthModal({
         createdAt: Date.now(),
       };
 
+      // Push to server cloud immediately
+      try {
+        await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'SYNC_ACCOUNT', account: newAccount }),
+        });
+      } catch (err) {
+        console.warn('Could not sync newly registered user immediately:', err);
+      }
+
       onRegisterAccount(newAccount);
-      setSuccessMsg('Đăng ký tài khoản tu tiên thành công!');
+      setSuccessMsg('Chúc mừng đạo hữu nhập môn Tiên Kỳ Các thành công!');
       setTimeout(() => {
         onClose();
       }, 1000);
     } else {
-      // Login
-      const found = accounts.find(
-        (a) => a.username.toLowerCase() === username.trim().toLowerCase()
-      );
+      // Login - always query server cloud first to get freshest items and equipped status
+      setIsSyncing(true);
+      let found: UserAccount | undefined;
+
+      try {
+        const res = await fetch(`/api/sync?username=${encodeURIComponent(username.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.account) {
+            found = data.account;
+          }
+        }
+      } catch {
+        // network issue fallback to local
+      } finally {
+        setIsSyncing(false);
+      }
+
       if (!found) {
-        setErrorMsg('Không tìm thấy tài khoản đạo hữu. Vui lòng kiểm tra lại hoặc đăng ký mới.');
+        found = accounts.find((a) => a.username.toLowerCase() === username.trim().toLowerCase());
+      }
+
+      if (!found) {
+        setErrorMsg('Không tìm thấy đạo tịch này trên Tiên Giới. Vui lòng kiểm tra lại hoặc Đăng Ký mới!');
         return;
       }
 
       // Check ban status
       if (found.isBanned) {
-        setErrorMsg(`Tài khoản đã bị Quản Trị Viên cấm đăng nhập (Bị Ban). Lý do: ${found.banReason || 'Vi phạm Thiên Quy'}`);
+        setErrorMsg(`Tài khoản đã bị Thiên Đạo Chấp Pháp phong tỏa (Bị Ban). Lý do: ${found.banReason || 'Vi phạm môn quy'}`);
         return;
       }
 
       // Password verification
       if (found.username.toLowerCase() === 'admin') {
         if (password !== 'admin123') {
-          setErrorMsg('Mật khẩu quản trị viên không chính xác! (Mật khẩu: admin123)');
+          setErrorMsg('Mật khẩu quản trị viên không chính xác! (Mật khẩu mặc định: admin123)');
           return;
         }
       } else if (found.password && password && found.password !== password) {
-        setErrorMsg('Mật khẩu không chính xác. Vui lòng nhập lại!');
+        setErrorMsg('Mật khẩu đạo tịch không chính xác. Đạo hữu vui lòng nhập lại!');
         return;
       }
 
-      onSwitchAccount(found);
-      setSuccessMsg(`Đăng nhập thành công! Hoan nghênh ${found.daoName} quy vị.`);
+      // Sync and pull down all items to ensure this device has everything
+      setIsSyncing(true);
+      await Promise.all([syncUserFromCloud(), syncItemsFromCloud()]);
+      setIsSyncing(false);
+
+      // Re-read merged account from local storage to ensure all unlocked items/equipped frames are preserved
+      const refreshedAccounts = loadAllAccounts();
+      const freshUser = refreshedAccounts.find((a) => a.id === found!.id || a.username.toLowerCase() === found!.username.toLowerCase()) || found;
+
+      onSwitchAccount(freshUser);
+      setSuccessMsg(`Đăng nhập thành công! Hoan nghênh ${freshUser.daoName} ngự giá Tiên Giới.`);
       setTimeout(() => {
         onClose();
-      }, 800);
+      }, 700);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4">
-      <div className="w-full max-w-md bg-[#0d1424] border-2 border-amber-500/40 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-md bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl shadow-[0_0_40px_rgba(4,28,24,0.9)] p-5 sm:p-6 space-y-4 text-emerald-100 font-sans relative overflow-hidden">
+        {/* Ethereal background accent */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Header */}
+        <div className="relative flex items-center justify-between border-b border-emerald-500/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-950/80 border border-emerald-400/50 flex items-center justify-center text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
               {isRegister ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
             </div>
             <div>
-              <h3 className="font-bold text-slate-100 text-sm sm:text-base">
-                {isRegister ? 'Đăng Ký Đạo Tịch Tiên Giới' : 'Đăng Nhập Tài Khoản'}
+              <h3 className="font-xianxia font-bold text-white text-base sm:text-lg tracking-wide text-glow-jade">
+                {isRegister ? 'Đăng Ký Đạo Tịch Tiên Môn' : 'Đăng Nhập Đạo Tịch'}
               </h3>
-              <p className="text-[11px] text-slate-400">Lưu trữ đạo hạnh và thành tích tu tiên</p>
+              <p className="text-[11px] text-emerald-300/80 flex items-center gap-1">
+                <span>Đồng bộ đa thiết bị (Máy tính & Điện thoại)</span>
+              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => {
               if (required && currentUser.isGuest) {
-                setErrorMsg('⚠️ Đạo hữu cần Đăng Nhập hoặc Đăng Ký tài khoản trước mới có thể bước vào Tiên Kỳ Giới!');
+                setErrorMsg('⚠️ Đạo hữu cần Đăng Nhập hoặc Đăng Ký trước để lưu danh trên Tiên Giới!');
                 return;
               }
               onClose();
             }}
-            className="text-slate-400 hover:text-slate-200 text-lg leading-none p-1 rounded hover:bg-slate-800 transition-colors"
+            className="text-emerald-300/70 hover:text-white text-base leading-none p-1.5 rounded-lg hover:bg-emerald-900/40 transition-colors"
             title={required && currentUser.isGuest ? 'Cần đăng nhập hoặc đăng ký trước' : 'Đóng'}
           >
             ✕
           </button>
         </div>
 
+        {/* Cloud Sync Status bar */}
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-500/30 text-[11px]">
+          <div className="flex items-center gap-2 text-emerald-200">
+            <Cloud className={`w-3.5 h-3.5 ${cloudSynced ? 'text-teal-400' : 'text-emerald-400'}`} />
+            <span>Đám Mây Tiên Giới: <strong className="text-white">Đã kích hoạt đồng bộ</strong></span>
+          </div>
+          <button
+            type="button"
+            onClick={handleManualSync}
+            disabled={isSyncing}
+            className="px-2 py-0.5 rounded-md bg-emerald-800/40 hover:bg-emerald-700/60 text-emerald-200 text-[10px] font-bold border border-emerald-400/30 flex items-center gap-1 transition-all disabled:opacity-50"
+            title="Tải dữ liệu mới nhất từ máy chủ"
+          >
+            <RefreshCw className={`w-2.5 h-2.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng Bộ Ngay'}</span>
+          </button>
+        </div>
+
         {/* Required initial visit notice */}
         {required && currentUser.isGuest && (
-          <div className="p-3 rounded-xl bg-gradient-to-r from-amber-950/90 via-purple-950/70 to-slate-900 border border-amber-500/60 shadow-lg text-xs space-y-1.5">
-            <div className="flex items-center gap-2 text-amber-300 font-bold">
-              <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-              <span>Yêu Cầu Đăng Nhập / Đăng Ký Lần Đầu</span>
+          <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/90 via-teal-950/80 to-[#041c19] border border-emerald-400/50 shadow-lg text-xs space-y-1.5">
+            <div className="flex items-center gap-2 text-emerald-300 font-bold font-xianxia text-sm">
+              <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" style={{ animationDuration: '6s' }} />
+              <span>Yêu Cầu Nhập Môn / Đăng Nhập</span>
             </div>
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              Để bảo lưu đạo hạnh, ELO, pháp bảo tu chân và tham gia luận đạo trên Phong Thần Bảng, đạo hữu cần <strong className="text-amber-300">Đăng Nhập</strong> hoặc <strong className="text-amber-300">Đăng Ký</strong> tài khoản trước khi vào sảnh cờ.
+            <p className="text-emerald-100/90 text-[11px] leading-relaxed">
+              Dữ liệu của đạo hữu (Khung viền, Pháp tướng, Pháp bảo, ELO, Linh thạch) sẽ được <strong className="text-white">đồng bộ xuyên suốt giữa Điện thoại và Máy tính</strong>. Vui lòng đăng nhập hoặc đăng ký tài khoản.
             </p>
           </div>
         )}
 
         {/* Current session banner */}
         {!currentUser.isGuest ? (
-          <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 flex items-center justify-between gap-2">
+          <div className="p-2.5 rounded-xl bg-[#062420]/80 border border-emerald-500/30 flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] text-slate-400 block font-medium">Tài khoản đang sử dụng:</span>
+              <span className="text-[10px] text-emerald-300/70 block font-medium">Tài khoản đang ngự tại thiết bị:</span>
               <div className="flex items-center gap-2 mt-0.5 truncate">
-                <span className="text-xs font-bold text-slate-100 truncate">{currentUser.daoName}</span>
-                <span className="text-[10px] text-amber-400 font-mono shrink-0">@{currentUser.username}</span>
+                <span className="text-xs font-bold text-white font-xianxia truncate">{currentUser.daoName}</span>
+                <span className="text-[10px] text-teal-300 font-mono shrink-0">@{currentUser.username}</span>
               </div>
             </div>
             {onLogout && (
@@ -182,79 +304,79 @@ export default function AuthModal({
                   onClose();
                   onLogout();
                 }}
-                className="py-1 px-2.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-[11px] font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-sm"
+                className="py-1 px-2.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 border border-rose-500/40 text-[11px] font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-sm"
                 title={`Đăng xuất khỏi ${currentUser.daoName}`}
               >
-                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <LogOut className="w-3.5 h-3.5 text-rose-300" />
                 <span>Đăng Xuất</span>
               </button>
             )}
           </div>
         ) : (
-          <div className="p-2 rounded-xl bg-amber-950/30 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
-            <span>Đang ở chế độ: <strong>Khách Vãng Lai</strong> (chưa liên kết tài khoản)</span>
+          <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-200 flex items-center justify-between">
+            <span>Đang ở chế độ: <strong className="text-white">Khách Vãng Lai</strong> (chưa liên kết đạo tịch)</span>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-2.5 rounded-lg bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs">
+          <div className="p-2.5 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs shadow-lg">
             {errorMsg}
           </div>
         )}
 
         {successMsg && (
-          <div className="p-2.5 rounded-lg bg-emerald-950/80 border border-emerald-500/60 text-emerald-200 text-xs flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-emerald-400" />
+          <div className="p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-400/60 text-emerald-200 text-xs flex items-center gap-1.5 shadow-lg">
+            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleAuthSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-300 font-medium mb-1">Tên Tài Khoản</label>
+            <label className="block text-emerald-200/90 font-medium mb-1">Tên Tài Khoản (Đăng nhập máy tính & di động)</label>
             <input
               type="text"
-              placeholder="ví dụ: daohuuxian"
+              placeholder="ví dụ: daohuuxian hoặc admin"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+              className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
               required
             />
           </div>
 
           <div>
-            <label className="block text-slate-300 font-medium mb-1">Mật Khẩu Đạo Tịch</label>
+            <label className="block text-emerald-200/90 font-medium mb-1">Mật Khẩu Đạo Tịch</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="•••••••• (admin: admin123)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+              className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
             />
           </div>
 
           {isRegister && (
             <>
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Đạo Hiệu Nhân Vật</label>
+                <label className="block text-emerald-200/90 font-medium mb-1">Đạo Hiệu Tu Tiên</label>
                 <input
                   type="text"
                   placeholder="ví dụ: Thanh Phong Chân Nhân, Bạch Y Kiếm Khách"
                   value={daoName}
                   onChange={(e) => setDaoName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-medium mb-1">Tông Môn / Tiên Môn</label>
+                <label className="block text-emerald-200/90 font-medium mb-1">Tông Môn / Tiên Môn</label>
                 <input
                   type="text"
-                  placeholder="ví dụ: Thục Sơn Kiếm Phái, Thanh Vân Môn"
+                  placeholder="ví dụ: Thục Sơn Kiếm Phái, Thanh Vân Môn, Tiên Kỳ Các"
                   value={sect}
                   onChange={(e) => setSect(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
                 />
               </div>
             </>
@@ -262,32 +384,32 @@ export default function AuthModal({
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-lg shadow-orange-500/20 transition-all"
+            className="w-full py-2.5 rounded-xl jade-button-primary font-xianxia font-bold text-sm tracking-wide shadow-lg transition-all"
           >
-            {isRegister ? 'Tạo Tài Khoản Tiên Môn' : 'Đăng Nhập'}
+            {isRegister ? 'Ghi Danh Đạo Tịch Tiên Môn' : 'Đăng Nhập Tiên Giới'}
           </button>
         </form>
 
         {/* Switch mode */}
-        <div className="pt-2 text-center text-xs text-slate-400">
+        <div className="pt-2 text-center text-xs text-emerald-300/80">
           {isRegister ? (
             <span>
               Đã có đạo tịch?{' '}
               <button
                 type="button"
                 onClick={() => setIsRegister(false)}
-                className="text-amber-400 font-semibold hover:underline"
+                className="text-teal-300 font-bold hover:underline"
               >
                 Đăng nhập ngay
               </button>
             </span>
           ) : (
             <span>
-              Chưa có tài khoản tu tiên?{' '}
+              Chưa có đạo tịch tu chân?{' '}
               <button
                 type="button"
                 onClick={() => setIsRegister(true)}
-                className="text-amber-400 font-semibold hover:underline"
+                className="text-teal-300 font-bold hover:underline"
               >
                 Đăng ký mới
               </button>
@@ -295,12 +417,12 @@ export default function AuthModal({
           )}
         </div>
 
-        {/* List of existing saved accounts */}
+        {/* List of existing accounts */}
         {accounts.length > 0 && !isRegister && (
-          <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
+          <div className="pt-3 border-t border-emerald-500/20 space-y-2 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-medium">Tài khoản đã lưu:</span>
-              <span className="text-[10px] text-amber-400/90 font-mono">Tài khoản admin: admin / admin123</span>
+              <span className="text-emerald-300/80 font-medium">Chọn nhanh tài khoản đã lưu:</span>
+              <span className="text-[10px] text-teal-300/90 font-mono">admin / admin123</span>
             </div>
             <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
               {accounts.map((acc) => {
@@ -317,29 +439,29 @@ export default function AuthModal({
                       onSwitchAccount(acc);
                       onClose();
                     }}
-                    className={`p-2 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
+                    className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                       acc.isBanned
                         ? 'border-rose-900/60 bg-rose-950/30 text-rose-400 opacity-70 cursor-not-allowed'
                         : isSelected
-                        ? 'border-amber-400 bg-amber-950/30 text-amber-300'
-                        : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
+                        ? 'border-teal-400 bg-emerald-950/60 text-white shadow-[0_0_12px_rgba(20,184,166,0.3)]'
+                        : 'border-emerald-500/20 bg-[#041c19]/60 text-emerald-100 hover:border-emerald-400/50 hover:bg-emerald-950/40'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="font-bold">{acc.daoName}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">@{acc.username}</span>
+                      <span className="font-xianxia font-bold text-white">{acc.daoName}</span>
+                      <span className="text-[10px] text-emerald-400/80 font-mono">@{acc.username}</span>
                       {isAdmin && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
                           Admin
                         </span>
                       )}
                       {acc.isBanned && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-900/40 text-rose-300 border border-rose-700/60 font-bold">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-rose-900/40 text-rose-300 border border-rose-700/60 font-bold">
                           Bị Ban
                         </span>
                       )}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono">{acc.elo} ELO</div>
+                    <div className="text-[10px] text-teal-300 font-mono font-bold">{acc.elo} ELO</div>
                   </div>
                 );
               })}

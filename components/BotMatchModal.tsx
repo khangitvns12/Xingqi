@@ -76,33 +76,33 @@ export default function BotMatchModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#0b101f] border border-amber-500/30 rounded-2xl shadow-2xl shadow-purple-950/40 p-4 sm:p-6 space-y-5 my-auto max-h-[95vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative w-full max-w-3xl bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl shadow-[0_0_50px_rgba(4,28,24,0.9)] p-4 sm:p-6 space-y-5 my-auto max-h-[95vh] overflow-y-auto text-emerald-100 font-xianxia">
         {/* Background glow effects */}
-        <div className="absolute -top-12 -left-12 w-64 h-64 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -top-12 -left-12 w-64 h-64 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -right-12 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
 
         {/* Modal Header */}
-        <div className="relative z-10 flex items-center justify-between border-b border-slate-800 pb-3.5">
+        <div className="relative z-10 flex items-center justify-between border-b border-emerald-500/30 pb-3.5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-700 flex items-center justify-center shadow-lg shadow-purple-500/20 text-white">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg text-white">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-bold text-white text-glow-jade flex items-center gap-2">
                 <span>Chế Độ Chơi Với Bot</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-sans font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-teal-300 border border-emerald-500/40 font-medium">
                   Chọn Độ Khó
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-emerald-300/70">
                 Luận đạo cùng Trí Giả Tiên Giới, rèn giũa kỳ đạo từ sơ học đến đỉnh phong
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors text-base"
+            className="w-8 h-8 rounded-lg bg-[#021310] hover:bg-[#062420] text-emerald-400 hover:text-white flex items-center justify-center transition-colors text-base border border-emerald-500/30"
           >
             ✕
           </button>
@@ -339,24 +339,24 @@ export default function BotMatchModal({
         </div>
 
         {/* Modal Action Footer */}
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>Đối thủ: <strong className="text-amber-300">{selectedPreset.botRival.name}</strong> ({selectedPreset.subName})</span>
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-emerald-500/20">
+          <div className="flex items-center gap-2 text-xs text-emerald-300/80">
+            <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+            <span>Đối thủ: <strong className="text-teal-200">{selectedPreset.botRival.name}</strong> ({selectedPreset.subName})</span>
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium text-xs transition-colors"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#031815] text-emerald-300 hover:bg-[#062923] font-medium text-xs transition-colors border border-emerald-500/30"
             >
               Quay Lại Sảnh
             </button>
             <button
               type="button"
               onClick={handleStart}
-              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+              className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl jade-button-primary text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 cursor-pointer"
             >
               <Swords className="w-4 h-4" />
               <span>Bắt Đầu Luận Đạo Với Bot</span>

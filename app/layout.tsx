@@ -7,13 +7,13 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: 'cover',
-  themeColor: '#070b14',
+  themeColor: '#031412',
   colorScheme: 'dark',
 };
 
 export const metadata: Metadata = {
-  title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.0',
-  description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ, ghép trận elo, hiệu ứng kỹ năng bắt quân, cửa hàng Tiên Các, khung viền avatar tuỳ chỉnh, Pháp Tướng hiển linh và hệ thống Quản Trị Viên quản lý tài khoản.',
+  title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.1',
+  description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ ngọc bích, đồng bộ dữ liệu đa thiết bị máy chủ đám mây, ghép trận elo, hiệu ứng bắt quân tiên đạo, Tiên Các, khung viền avatar, Pháp Tướng hiển linh.',
   applicationName: 'Tiên Kỳ Đạo',
   appleWebApp: {
     capable: true,
@@ -24,14 +24,14 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.0',
-    description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ, ghép trận elo, hiệu ứng kỹ năng bắt quân, cửa hàng Tiên Các, khung viền avatar tuỳ chỉnh, Pháp Tướng hiển linh và hệ thống Quản Trị Viên quản lý tài khoản.',
+    title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.1',
+    description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ ngọc bích, đồng bộ dữ liệu đa thiết bị máy chủ đám mây, ghép trận elo, hiệu ứng bắt quân tiên đạo, Tiên Các, khung viền avatar, Pháp Tướng hiển linh.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.0',
-    description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ, ghép trận elo, hiệu ứng kỹ năng bắt quân, cửa hàng Tiên Các, khung viền avatar tuỳ chỉnh, Pháp Tướng hiển linh và hệ thống Quản Trị Viên quản lý tài khoản.',
+    title: 'Tiên Kỳ Đạo - Cờ Tướng Tu Tiên v1.3.1',
+    description: 'Website chơi cờ tướng online phong cách tiên hiệp tu chân: sảnh chờ ngọc bích, đồng bộ dữ liệu đa thiết bị máy chủ đám mây, ghép trận elo, hiệu ứng bắt quân tiên đạo, Tiên Các, khung viền avatar, Pháp Tướng hiển linh.',
   },
 };
 
@@ -42,11 +42,11 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-[#070b14] text-[#e2e8f0] min-h-screen min-h-[100dvh] antialiased selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden touch-manipulation" suppressHydrationWarning>
+      <body className="bg-[#031412] text-[#f1fbf8] min-h-screen min-h-[100dvh] antialiased selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden touch-manipulation" suppressHydrationWarning>
         {children}
       </body>
     </html>

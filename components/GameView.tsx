@@ -548,20 +548,20 @@ export default function GameView({
   const getRenderC = (colIdx: number) => (flipped ? 8 - colIdx : colIdx);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 space-y-4">
+    <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-6 space-y-4 font-xianxia text-emerald-100">
       {/* Top Bar / Quick match status */}
-      <div className="flex items-center justify-between bg-[#0d1424]/90 border border-amber-500/20 rounded-xl px-3 sm:px-5 py-2 text-xs">
+      <div className="flex items-center justify-between bg-gradient-to-r from-[#082a25] via-[#051c18] to-[#041d1a] border border-emerald-500/30 rounded-xl px-3 sm:px-5 py-2 text-xs">
         <div className="flex items-center gap-2">
           <button
             onClick={onReturnToLobby}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="p-1.5 rounded-lg bg-[#021310] hover:bg-[#062420] text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer"
             title="Thoát về sảnh"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <span className="font-bold text-slate-200">{room.name}</span>
-            <span className="text-slate-400 hidden sm:inline ml-2">
+            <span className="font-bold text-white text-glow-jade">{room.name}</span>
+            <span className="text-emerald-300/70 hidden sm:inline ml-2">
               • {room.isRanked ? 'Xếp Hạng ELO' : 'Tập Luyện'}
             </span>
           </div>
@@ -630,8 +630,8 @@ export default function GameView({
           <div
             className={`w-full max-w-[560px] flex items-center justify-between px-3 sm:px-4 py-2 rounded-xl border transition-all ${
               currentTurn === opponentPlayer.side
-                ? 'bg-gradient-to-r from-slate-900 via-[#151c30] to-slate-900 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                : 'bg-slate-900/80 border-slate-800'
+                ? 'bg-gradient-to-r from-[#082a25] via-[#0b3831] to-[#082a25] border-teal-400/80 shadow-[0_0_15px_rgba(20,184,166,0.3)]'
+                : 'bg-[#041d1a]/90 border-emerald-500/20'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -645,32 +645,32 @@ export default function GameView({
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-slate-200 truncate">
+                  <span className="text-xs sm:text-sm font-bold text-white truncate">
                     {opponentPlayer.name}
                   </span>
                   {opponentPlayer.isAi && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-500/40 font-bold flex items-center gap-1">
-                      <Bot className="w-3 h-3 text-purple-400" />
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-teal-300 border border-emerald-500/40 font-bold flex items-center gap-1 font-sans">
+                      <Bot className="w-3 h-3 text-teal-300" />
                       <span>Cấp {opponentPlayer.aiDifficultyLevel || opponentPlayer.realmLevel || 2}</span>
                     </span>
                   )}
                   <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-sans ${
                       opponentPlayer.side === 'red'
                         ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                        : 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'
+                        : 'bg-teal-950 text-teal-300 border border-teal-500/40'
                     }`}
                   >
                     {opponentPlayer.side === 'red' ? 'Hồng (Tiên)' : 'Hắc (Hậu)'}
                   </span>
                 </div>
-                <div className="text-[10px] text-amber-300/90 truncate">
+                <div className="text-[10px] text-teal-300/80 truncate">
                   {opponentPlayer.title} • {opponentPlayer.realm} ({opponentPlayer.elo} ELO)
                 </div>
                 {/* Captured pieces by opponent */}
                 <div className="flex items-center gap-1 mt-0.5 h-4">
                   {(opponentPlayer.side === 'red' ? capturedRed : capturedBlack).slice(-6).map((p, i) => (
-                    <span key={i} className="text-[10px] text-slate-400 bg-slate-800/80 px-1 rounded">
+                    <span key={i} className="text-[10px] text-emerald-300 bg-[#021310] px-1 rounded border border-emerald-500/20">
                       {getPieceCharVi(p)}
                     </span>
                   ))}
@@ -681,15 +681,15 @@ export default function GameView({
             {/* Timer & Turn Indicator */}
             <div className="flex items-center gap-2">
               {currentTurn === opponentPlayer.side && (
-                <span className="hidden sm:inline-block text-[10px] font-semibold text-amber-400 animate-pulse">
+                <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-300 animate-pulse">
                   {isAiThinking ? 'Đang cảm ngộ...' : 'Đang suy nghĩ...'}
                 </span>
               )}
               <div
                 className={`font-mono text-sm sm:text-base font-bold px-2.5 sm:px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
                   currentTurn === opponentPlayer.side
-                    ? 'bg-amber-950/80 text-amber-300 border-amber-500/60 animate-pulse'
-                    : 'bg-slate-950 text-slate-400 border-slate-800'
+                    ? 'bg-teal-950/80 text-teal-200 border-teal-500/60 animate-pulse'
+                    : 'bg-[#021310] text-emerald-400/60 border-emerald-900/40'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -923,8 +923,8 @@ export default function GameView({
           <div
             className={`w-full max-w-[560px] flex items-center justify-between px-3 sm:px-4 py-2 rounded-xl border transition-all ${
               currentTurn === myPlayer.side
-                ? 'bg-gradient-to-r from-slate-900 via-[#151c30] to-slate-900 border-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
-                : 'bg-slate-900/80 border-slate-800'
+                ? 'bg-gradient-to-r from-[#082a25] via-[#0b3831] to-[#082a25] border-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                : 'bg-[#041d1a]/90 border-emerald-500/20'
             }`}
           >
             <div className="flex items-center gap-2.5">
@@ -939,26 +939,26 @@ export default function GameView({
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-slate-200 truncate">
+                  <span className="text-xs sm:text-sm font-bold text-white truncate">
                     {myPlayer.name} (Bạn)
                   </span>
                   <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-sans ${
                       myPlayer.side === 'red'
                         ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                        : 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'
+                        : 'bg-teal-950 text-teal-300 border border-teal-500/40'
                     }`}
                   >
                     {myPlayer.side === 'red' ? 'Hồng (Tiên)' : 'Hắc (Hậu)'}
                   </span>
                 </div>
-                <div className="text-[10px] text-amber-300/90 truncate">
+                <div className="text-[10px] text-teal-300/80 truncate">
                   {myPlayer.title} • {myPlayer.realm} ({myPlayer.elo} ELO)
                 </div>
                 {/* Captured pieces by you */}
                 <div className="flex items-center gap-1 mt-0.5 h-4">
                   {(myPlayer.side === 'red' ? capturedRed : capturedBlack).slice(-6).map((p, i) => (
-                    <span key={i} className="text-[10px] text-slate-400 bg-slate-800/80 px-1 rounded">
+                    <span key={i} className="text-[10px] text-emerald-300 bg-[#021310] px-1 rounded border border-emerald-500/20">
                       {getPieceCharVi(p)}
                     </span>
                   ))}
@@ -977,7 +977,7 @@ export default function GameView({
                 className={`font-mono text-sm sm:text-base font-bold px-2.5 sm:px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
                   currentTurn === myPlayer.side
                     ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60 animate-pulse'
-                    : 'bg-slate-950 text-slate-400 border-slate-800'
+                    : 'bg-[#021310] text-emerald-400/60 border-emerald-900/40'
                 }`}
               >
                 <Clock className="w-3.5 h-3.5" />
@@ -1159,25 +1159,25 @@ export default function GameView({
 
       {/* Game Over Modal with ELO & Cultivation Rewards */}
       {gameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md bg-[#0d1424] border-2 border-amber-400 rounded-2xl p-6 shadow-[0_0_50px_rgba(245,158,11,0.3)] space-y-5 text-center relative overflow-hidden">
-            <div className="absolute -top-12 -left-12 w-36 h-36 rounded-full bg-amber-500/10 blur-2xl" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl p-6 shadow-[0_0_50px_rgba(4,28,24,0.9)] space-y-5 text-center relative overflow-hidden text-emerald-100 font-xianxia">
+            <div className="absolute -top-12 -left-12 w-36 h-36 rounded-full bg-teal-500/10 blur-2xl" />
 
             <div className="space-y-2">
-              <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/10 border-2 border-amber-400 flex items-center justify-center text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+              <div className="w-16 h-16 mx-auto rounded-full bg-emerald-950/80 border-2 border-teal-400 flex items-center justify-center text-teal-300 shadow-[0_0_20px_rgba(20,184,166,0.5)]">
                 {winner === mySide ? (
-                  <Trophy className="w-8 h-8 text-amber-400 animate-bounce" />
+                  <Trophy className="w-8 h-8 text-teal-300 animate-bounce" />
                 ) : (
-                  <Swords className="w-8 h-8 text-slate-400" />
+                  <Swords className="w-8 h-8 text-emerald-400/70" />
                 )}
               </div>
 
               <h2
-                className={`text-2xl font-extrabold font-serif ${
+                className={`text-2xl font-extrabold text-glow-jade ${
                   winner === mySide
-                    ? 'text-amber-300'
+                    ? 'text-white'
                     : winner === 'draw'
-                    ? 'text-cyan-300'
+                    ? 'text-teal-300'
                     : 'text-rose-400'
                 }`}
               >
@@ -1187,19 +1187,19 @@ export default function GameView({
                   ? 'BẮT TAY HÒA HOÃN'
                   : 'THẤT BẠI LĨNH NGỘ'}
               </h2>
-              <p className="text-xs text-slate-300">{gameOverReason}</p>
+              <p className="text-xs text-emerald-300/80">{gameOverReason}</p>
             </div>
 
             {/* Cultivation Rewards Breakdown */}
-            <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5 text-xs text-left">
+            <div className="p-3.5 rounded-xl bg-[#031815] border border-emerald-500/30 space-y-2.5 text-xs text-left">
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Kỳ Lực Đạo Hạnh (ELO):</span>
+                <span className="text-emerald-300/70">Kỳ Lực Đạo Hạnh (ELO):</span>
                 <span
                   className={`font-mono font-bold text-sm ${
                     winner === mySide
                       ? 'text-emerald-400'
                       : winner === 'draw'
-                      ? 'text-slate-300'
+                      ? 'text-emerald-300'
                       : 'text-rose-400'
                   }`}
                 >
@@ -1207,14 +1207,14 @@ export default function GameView({
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Tu Vi Tích Lũy:</span>
-                <span className="font-mono font-bold text-cyan-300">
+                <span className="text-emerald-300/70">Tu Vi Tích Lũy:</span>
+                <span className="font-mono font-bold text-teal-300">
                   +{winner === mySide ? '150' : winner === 'draw' ? '50' : '30'} Tu Vi
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-400">Linh Thạch Thu Hoạch:</span>
-                <span className="font-mono font-bold text-amber-300">
+                <span className="text-emerald-300/70">Linh Thạch Thu Hoạch:</span>
+                <span className="font-mono font-bold text-white">
                   +{winner === mySide ? '50' : winner === 'draw' ? '15' : '5'} Linh Thạch
                 </span>
               </div>
@@ -1224,7 +1224,7 @@ export default function GameView({
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={onReturnToLobby}
-                className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-colors"
+                className="py-2.5 rounded-xl bg-[#031815] hover:bg-[#062923] text-emerald-200 border border-emerald-500/30 font-semibold text-xs transition-colors cursor-pointer"
               >
                 Về Sảnh Chờ
               </button>
@@ -1243,7 +1243,7 @@ export default function GameView({
                   setCapturedRed([]);
                   setCapturedBlack([]);
                 }}
-                className="py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-lg shadow-orange-500/30 transition-all"
+                className="py-2.5 rounded-xl jade-button-primary text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
               >
                 Tái Đấu Ván Mới
               </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
   ShoppingBag,
@@ -12,6 +12,8 @@ import {
   Shield,
   Award,
   Gem,
+  Cloud,
+  RefreshCw,
 } from 'lucide-react';
 import { UserAccount } from '../lib/storage/userStore';
 import {
@@ -23,6 +25,7 @@ import {
   loadDharmaIdols,
   loadCustomArtifacts,
   loadCustomTitles,
+  syncItemsFromCloud,
 } from '../lib/cultivation/shopAndFrames';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import AvatarWithFrame from './AvatarWithFrame';
@@ -43,11 +46,40 @@ export default function ShopModal({
 }: ShopModalProps) {
   const [activeTab, setActiveTab] = useState<'frames' | 'dharma' | 'artifacts' | 'titles' | 'pills'>('frames');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const frames = loadCustomFrames().filter((f) => f.inShop);
-  const dharmaIdols = loadDharmaIdols().filter((d) => d.inShop);
-  const artifacts = loadCustomArtifacts().filter((a) => a.inShop);
-  const customTitles = loadCustomTitles().filter((t) => t.inShop);
+  const [frames, setFrames] = useState<CustomFrame[]>(() => loadCustomFrames().filter((f) => f.inShop));
+  const [dharmaIdols, setDharmaIdols] = useState<DharmaIdol[]>(() => loadDharmaIdols().filter((d) => d.inShop));
+  const [artifacts, setArtifacts] = useState<CustomArtifact[]>(() => loadCustomArtifacts().filter((a) => a.inShop));
+  const [customTitles, setCustomTitles] = useState<CustomTitle[]>(() => loadCustomTitles().filter((t) => t.inShop));
+
+  // Reload data from local & cloud
+  const reloadData = () => {
+    setFrames(loadCustomFrames().filter((f) => f.inShop));
+    setDharmaIdols(loadDharmaIdols().filter((d) => d.inShop));
+    setArtifacts(loadCustomArtifacts().filter((a) => a.inShop));
+    setCustomTitles(loadCustomTitles().filter((t) => t.inShop));
+  };
+
+  useEffect(() => {
+    // Background cloud sync on opening shop
+    syncItemsFromCloud().then(() => {
+      reloadData();
+    });
+  }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncItemsFromCloud();
+      reloadData();
+      showMsg('Đã đồng bộ kho bảo vật Tiên Các từ máy chủ!', 'success');
+    } catch {
+      showMsg('Không thể kết nối máy chủ đồng bộ.', 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const userUnlockedFrames = user.unlockedFrameIds || [];
   const userUnlockedDharma = user.unlockedDharmaIds || [];
@@ -85,7 +117,7 @@ export default function ShopModal({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: [artifact.auraColor, '#f59e0b', '#06b6d4'],
+        colors: [artifact.auraColor, '#10b981', '#14b8a6', '#ffffff'],
       });
     } catch {
       // ignore
@@ -132,7 +164,6 @@ export default function ShopModal({
   // Buy Frame
   const handleBuyFrame = (frame: CustomFrame) => {
     if (userUnlockedFrames.includes(frame.id)) {
-      // Equip
       onUpdateUser({ selectedFrameId: frame.id });
       showMsg(`Đã trang bị [${frame.name}] thành công!`);
       return;
@@ -150,7 +181,7 @@ export default function ShopModal({
         particleCount: 80,
         spread: 60,
         origin: { y: 0.6 },
-        colors: [frame.glowColor, '#f59e0b', '#06b6d4'],
+        colors: [frame.glowColor, '#10b981', '#ffffff'],
       });
     } catch {
       // ignore
@@ -190,7 +221,7 @@ export default function ShopModal({
         particleCount: 100,
         spread: 80,
         origin: { y: 0.6 },
-        colors: [dharma.auraColor, '#f59e0b', '#a855f7'],
+        colors: [dharma.auraColor, '#10b981', '#14b8a6', '#ffffff'],
       });
     } catch {
       // ignore
@@ -223,42 +254,52 @@ export default function ShopModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4">
-      <div className="w-full max-w-4xl bg-[#0c1222] border-2 border-amber-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-4xl bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl shadow-[0_0_50px_rgba(4,28,24,0.9)] overflow-hidden flex flex-col max-h-[92vh] text-emerald-100">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-slate-900 via-[#151c33] to-slate-900 px-4 py-3 sm:px-6 sm:py-4 border-b border-amber-500/30 flex items-center justify-between">
+        <div className="relative bg-[#041d1a] px-4 py-3 sm:px-6 sm:py-4 border-b border-emerald-500/30 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/30">
+            <div className="w-10 h-10 rounded-xl jade-button-primary flex items-center justify-center text-white shadow-lg">
               <ShoppingBag className="w-5 h-5 fill-current" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold font-serif text-slate-100">
+                <h3 className="text-base sm:text-lg font-bold font-xianxia text-white text-glow-jade">
                   Tiên Các • Cửa Hàng Linh Thạch
                 </h3>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-mono font-bold">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-teal-300 border border-emerald-500/40 font-mono font-bold">
                   BẢO VẬT TIÊN GIỚI
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">
-                Sử dụng Linh Thạch tích lũy để sở hữu Khung Avatar tùy chỉnh, Pháp Tướng hiển thị & Đan Dược
+              <p className="text-[11px] text-emerald-300/80">
+                Sở hữu Khung Viền tùy chỉnh, Pháp Tướng hiển thị, Pháp Bảo hộ thân & Đan Dược
               </p>
             </div>
           </div>
 
-          {/* User's Spirit Stones balance */}
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-cyan-500/40 flex items-center gap-2 shadow-inner">
+          {/* User's Spirit Stones balance & Cloud Sync */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="px-2.5 py-1.5 rounded-xl bg-[#031815] border border-emerald-500/40 hover:border-teal-400 text-teal-300 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Đồng bộ lại khung viền và bảo vật mới nhất từ đám mây"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline font-xianxia">Đồng Bộ</span>
+            </button>
+
+            <div className="px-3 py-1.5 rounded-xl bg-[#021310] border border-emerald-500/40 flex items-center gap-2 shadow-inner">
               <span className="text-sm">💎</span>
-              <span className="font-mono font-bold text-cyan-300 text-sm">
+              <span className="font-mono font-bold text-teal-300 text-sm">
                 {user.spiritStones.toLocaleString()}
               </span>
-              <span className="text-[10px] text-slate-400 hidden sm:inline">Linh Thạch</span>
+              <span className="text-[10px] text-emerald-300/80 hidden sm:inline">Linh Thạch</span>
             </div>
 
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 text-xl leading-none p-1"
+              className="text-emerald-300/70 hover:text-white text-xl leading-none p-1 transition-colors"
             >
               ✕
             </button>
@@ -271,7 +312,7 @@ export default function ShopModal({
             className={`px-4 py-2 text-xs font-semibold flex items-center gap-2 border-b ${
               feedback.type === 'error'
                 ? 'bg-rose-950/90 text-rose-200 border-rose-600/50'
-                : 'bg-emerald-950/90 text-emerald-200 border-emerald-600/50'
+                : 'bg-emerald-950/90 text-emerald-200 border-emerald-400/50'
             }`}
           >
             <Sparkles className="w-4 h-4 shrink-0" />
@@ -280,60 +321,60 @@ export default function ShopModal({
         )}
 
         {/* Tabs */}
-        <div className="flex items-center border-b border-slate-800 bg-slate-950/70 px-4 text-xs font-semibold overflow-x-auto scrollbar-none">
+        <div className="flex items-center border-b border-emerald-500/25 bg-[#031815] px-4 text-xs font-semibold overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('frames')}
-            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap font-xianxia ${
               activeTab === 'frames'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
-            <Shield className="w-4 h-4" />
+            <Shield className="w-4 h-4 text-teal-400" />
             <span>Khung Viền Tu Tiên ({frames.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('dharma')}
-            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap font-xianxia ${
               activeTab === 'dharma'
-                ? 'border-purple-400 text-purple-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-emerald-400" />
             <span>Pháp Tướng ({dharmaIdols.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('artifacts')}
-            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap font-xianxia ${
               activeTab === 'artifacts'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
-            <Gem className="w-4 h-4" />
+            <Gem className="w-4 h-4 text-teal-300" />
             <span>Pháp Bảo ({artifacts.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('titles')}
-            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap font-xianxia ${
               activeTab === 'titles'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
-            <Award className="w-4 h-4" />
+            <Award className="w-4 h-4 text-amber-300" />
             <span>Danh Hiệu Ảnh ({customTitles.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('pills')}
-            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap ${
+            className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap font-xianxia ${
               activeTab === 'pills'
-                ? 'border-amber-400 text-amber-300'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'border-teal-400 text-teal-200 font-bold'
+                : 'border-transparent text-emerald-400/70 hover:text-white'
             }`}
           >
-            <Flame className="w-4 h-4" />
+            <Flame className="w-4 h-4 text-emerald-300" />
             <span>Đan Dược Đột Phá</span>
           </button>
         </div>
@@ -344,7 +385,7 @@ export default function ShopModal({
           {activeTab === 'frames' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-slate-400">
+                <p className="text-emerald-300/80">
                   Khung viền hào quang bao quanh Avatar nhân vật trên bàn cờ, hồ sơ và bảng xếp hạng.
                 </p>
                 {user.role === 'admin' && onOpenAdmin && (
@@ -353,7 +394,7 @@ export default function ShopModal({
                       onClose();
                       onOpenAdmin();
                     }}
-                    className="text-[11px] text-amber-400 hover:underline flex items-center gap-1 font-semibold"
+                    className="text-[11px] text-teal-300 hover:underline flex items-center gap-1 font-semibold font-xianxia"
                   >
                     + Quản trị: Tải lên khung viền mới
                   </button>
@@ -371,10 +412,10 @@ export default function ShopModal({
                       key={frame.id}
                       className={`p-4 rounded-xl border transition-all flex flex-col justify-between space-y-3 ${
                         isEquipped
-                          ? 'border-amber-400 bg-amber-950/30 shadow-lg shadow-amber-500/20'
+                          ? 'border-teal-400 bg-emerald-950/60 shadow-lg shadow-emerald-950/50'
                           : isOwned
-                          ? 'border-slate-700 bg-slate-900/70'
-                          : 'border-slate-800 bg-slate-900/40'
+                          ? 'border-emerald-500/40 bg-[#062520]/80'
+                          : 'border-emerald-500/25 bg-[#041a17]/60'
                       }`}
                     >
                       <div className="flex items-start gap-3.5">
@@ -390,33 +431,33 @@ export default function ShopModal({
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-slate-100 text-sm truncate">{frame.name}</h4>
+                          <h4 className="font-bold text-white text-sm truncate font-xianxia">{frame.name}</h4>
                           <span
                             className="text-[10px] px-1.5 py-0.2 rounded font-semibold inline-block my-0.5"
                             style={{ backgroundColor: `${frame.glowColor}22`, color: frame.glowColor }}
                           >
                             {frame.rarity}
                           </span>
-                          <div className="font-mono text-cyan-300 font-bold text-xs mt-0.5">
+                          <div className="font-mono text-teal-300 font-bold text-xs mt-0.5">
                             💎 {frame.price.toLocaleString()} Linh Thạch
                           </div>
                         </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-emerald-200/70 line-clamp-2 leading-relaxed">
                         {frame.description}
                       </p>
 
-                      <div className="pt-2 border-t border-slate-800/80">
+                      <div className="pt-2 border-t border-emerald-500/20">
                         {isEquipped ? (
-                          <div className="w-full py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-center flex items-center justify-center gap-1.5">
+                          <div className="w-full py-2 rounded-xl bg-emerald-900/60 text-teal-200 border border-teal-500/40 font-bold text-center flex items-center justify-center gap-1.5 font-xianxia">
                             <Check className="w-3.5 h-3.5" />
                             <span>Đang Sử Dụng</span>
                           </div>
                         ) : isOwned ? (
                           <button
                             onClick={() => handleBuyFrame(frame)}
-                            className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition-colors"
+                            className="w-full py-2 rounded-xl bg-emerald-950 hover:bg-emerald-900 text-teal-100 border border-emerald-500/40 font-bold transition-colors font-xianxia"
                           >
                             Trang Bị Khung
                           </button>
@@ -424,10 +465,10 @@ export default function ShopModal({
                           <button
                             onClick={() => handleBuyFrame(frame)}
                             disabled={!canAfford}
-                            className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                            className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all font-xianxia ${
                               canAfford
-                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-md shadow-amber-500/20'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                ? 'jade-button-primary shadow-md'
+                                : 'bg-[#021310] text-emerald-600 cursor-not-allowed border border-emerald-500/20'
                             }`}
                           >
                             <span>Mua Với {frame.price} 💎</span>
@@ -445,7 +486,7 @@ export default function ShopModal({
           {activeTab === 'dharma' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-slate-400">
+                <p className="text-emerald-300/80">
                   Pháp Tướng Kim Thân hiển thị uy nghi lộng lẫy tại Trang Profile nhân vật của bạn.
                 </p>
                 {user.role === 'admin' && onOpenAdmin && (
@@ -454,7 +495,7 @@ export default function ShopModal({
                       onClose();
                       onOpenAdmin();
                     }}
-                    className="text-[11px] text-purple-400 hover:underline flex items-center gap-1 font-semibold"
+                    className="text-[11px] text-teal-300 hover:underline flex items-center gap-1 font-semibold font-xianxia"
                   >
                     + Quản trị: Thêm Pháp Tướng mới
                   </button>
@@ -473,14 +514,14 @@ export default function ShopModal({
                       key={dharma.id}
                       className={`rounded-2xl border overflow-hidden flex flex-col justify-between transition-all ${
                         isEquipped
-                          ? 'border-purple-400 bg-purple-950/30 shadow-xl shadow-purple-950/40'
+                          ? 'border-teal-400 bg-emerald-950/60 shadow-xl shadow-emerald-950/50'
                           : isOwned
-                          ? 'border-slate-700 bg-slate-900/70'
-                          : 'border-slate-800 bg-slate-900/40'
+                          ? 'border-emerald-500/40 bg-[#062520]/80'
+                          : 'border-emerald-500/25 bg-[#041a17]/60'
                       }`}
                     >
                       {/* Image showcase */}
-                      <div className="relative h-44 w-full bg-slate-950 overflow-hidden group">
+                      <div className="relative h-44 w-full bg-[#02110f] overflow-hidden group">
                         <img
                           src={dharma.imageUrl}
                           alt={dharma.name}
@@ -494,7 +535,7 @@ export default function ShopModal({
                         />
                         <div className="absolute top-2.5 right-2.5">
                           <span
-                            className="px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md"
+                            className="px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md font-xianxia"
                             style={{
                               backgroundColor: `${dharma.auraColor}33`,
                               color: dharma.auraColor,
@@ -510,34 +551,34 @@ export default function ShopModal({
                       <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-slate-100 text-sm">{dharma.name}</h4>
-                            <span className="font-mono text-cyan-300 font-bold text-xs">
+                            <h4 className="font-bold text-white text-sm font-xianxia">{dharma.name}</h4>
+                            <span className="font-mono text-teal-300 font-bold text-xs">
                               💎 {dharma.price.toLocaleString()}
                             </span>
                           </div>
-                          <span className="text-[11px] text-amber-300 font-medium block mt-0.5">
+                          <span className="text-[11px] text-emerald-300 font-medium block mt-0.5 font-xianxia">
                             {dharma.title}
                           </span>
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
+                          <p className="text-[11px] text-emerald-200/70 line-clamp-2 mt-1.5 leading-relaxed">
                             {dharma.description}
                           </p>
                         </div>
 
-                        <div className="pt-2.5 border-t border-slate-800/80">
+                        <div className="pt-2.5 border-t border-emerald-500/20">
                           {isEquipped ? (
-                            <div className="w-full py-2 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold text-center flex items-center justify-center gap-1.5">
+                            <div className="w-full py-2 rounded-xl bg-emerald-900/60 text-teal-200 border border-teal-500/40 font-bold text-center flex items-center justify-center gap-1.5 font-xianxia">
                               <Check className="w-3.5 h-3.5" />
                               <span>Đang Hiển Thị Profile</span>
                             </div>
                           ) : isOwned ? (
                             <button
                               onClick={() => handleBuyDharma(dharma)}
-                              className="w-full py-2 rounded-xl bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold transition-all shadow"
+                              className="w-full py-2 rounded-xl jade-button-primary text-white font-bold transition-all shadow font-xianxia"
                             >
                               Hiển Thị Pháp Thân
                             </button>
                           ) : !isRealmMet ? (
-                            <div className="w-full py-2 rounded-xl bg-slate-900 text-slate-500 border border-slate-800 text-center flex items-center justify-center gap-1.5">
+                            <div className="w-full py-2 rounded-xl bg-[#021310] text-emerald-600 border border-emerald-500/20 text-center flex items-center justify-center gap-1.5 font-xianxia">
                               <Lock className="w-3.5 h-3.5" />
                               <span>Cần Đạt Cấp {dharma.minRealmLevel}</span>
                             </div>
@@ -545,10 +586,10 @@ export default function ShopModal({
                             <button
                               onClick={() => handleBuyDharma(dharma)}
                               disabled={!canAfford}
-                              className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                              className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all font-xianxia ${
                                 canAfford
-                                  ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-950/40'
-                                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                  ? 'jade-button-primary shadow-md'
+                                  : 'bg-[#021310] text-emerald-600 cursor-not-allowed border border-emerald-500/20'
                               }`}
                             >
                               <span>Lĩnh Ngộ ({dharma.price} 💎)</span>
@@ -567,7 +608,7 @@ export default function ShopModal({
           {activeTab === 'artifacts' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-slate-400">
+                <p className="text-emerald-300/80">
                   Pháp bảo hộ mệnh thượng cổ, hỗ trợ ảnh động GIF / WebP phát quang vĩnh cửu.
                 </p>
                 {onOpenAdmin && (
@@ -576,7 +617,7 @@ export default function ShopModal({
                       onClose();
                       onOpenAdmin();
                     }}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 underline font-medium"
+                    className="text-[11px] text-teal-300 hover:underline font-medium font-xianxia"
                   >
                     + Thêm Pháp Bảo Mới (Admin)
                   </button>
@@ -584,7 +625,7 @@ export default function ShopModal({
               </div>
 
               {artifacts.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800 text-center text-slate-400">
+                <div className="p-8 rounded-2xl bg-[#041a17]/50 border border-emerald-500/20 text-center text-emerald-300/60 font-xianxia">
                   Hiện chưa có Pháp Bảo nào được niêm yết trong Tiên Các. Hãy liên hệ Quản Trị Viên!
                 </div>
               ) : (
@@ -600,13 +641,13 @@ export default function ShopModal({
                         key={art.id}
                         className={`rounded-2xl border overflow-hidden flex flex-col justify-between transition-all ${
                           isEquipped
-                            ? 'border-amber-400 bg-amber-950/30 shadow-xl shadow-amber-950/40'
+                            ? 'border-teal-400 bg-emerald-950/60 shadow-xl shadow-emerald-950/50'
                             : isOwned
-                            ? 'border-slate-700 bg-slate-900/70'
-                            : 'border-slate-800 bg-slate-900/40'
+                            ? 'border-emerald-500/40 bg-[#062520]/80'
+                            : 'border-emerald-500/25 bg-[#041a17]/60'
                         }`}
                       >
-                        <div className="relative h-44 w-full bg-slate-950 overflow-hidden group">
+                        <div className="relative h-44 w-full bg-[#02110f] overflow-hidden group">
                           <img
                             src={art.imageUrl}
                             alt={art.name}
@@ -617,18 +658,18 @@ export default function ShopModal({
                             style={{ boxShadow: `inset 0 0 24px ${art.auraColor}66` }}
                           />
                           <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
-                            <span className="px-2 py-0.5 rounded bg-black/70 text-[9px] font-bold text-amber-300">
+                            <span className="px-2 py-0.5 rounded bg-black/70 text-[9px] font-bold text-teal-200">
                               {art.rarity}
                             </span>
                             {art.isAnimated && (
-                              <span className="px-2 py-0.5 rounded bg-purple-950/80 border border-purple-500/40 text-[9px] font-bold text-purple-200">
+                              <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-400/40 text-[9px] font-bold text-teal-200">
                                 Ảnh Động
                               </span>
                             )}
                           </div>
                           <div className="absolute top-2.5 right-2.5">
                             <span
-                              className="px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md"
+                              className="px-2.5 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md font-xianxia"
                               style={{
                                 backgroundColor: `${art.auraColor}33`,
                                 color: art.auraColor,
@@ -643,34 +684,34 @@ export default function ShopModal({
                         <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                           <div>
                             <div className="flex items-center justify-between">
-                              <h4 className="font-bold text-slate-100 text-sm">{art.name}</h4>
-                              <span className="font-mono text-cyan-300 font-bold text-xs">
+                              <h4 className="font-bold text-white text-sm font-xianxia">{art.name}</h4>
+                              <span className="font-mono text-teal-300 font-bold text-xs">
                                 💎 {art.price.toLocaleString()}
                               </span>
                             </div>
-                            <span className="text-[11px] text-amber-300 font-medium block mt-0.5">
+                            <span className="text-[11px] text-emerald-300 font-medium block mt-0.5 font-xianxia">
                               {art.effect}
                             </span>
-                            <p className="text-[11px] text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
+                            <p className="text-[11px] text-emerald-200/70 line-clamp-2 mt-1.5 leading-relaxed">
                               {art.description}
                             </p>
                           </div>
 
-                          <div className="pt-2.5 border-t border-slate-800/80">
+                          <div className="pt-2.5 border-t border-emerald-500/20">
                             {isEquipped ? (
-                              <div className="w-full py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold text-center flex items-center justify-center gap-1.5">
+                              <div className="w-full py-2 rounded-xl bg-emerald-900/60 text-teal-200 border border-teal-500/40 font-bold text-center flex items-center justify-center gap-1.5 font-xianxia">
                                 <Check className="w-3.5 h-3.5" />
                                 <span>Đang Trang Bị</span>
                               </div>
                             ) : isOwned ? (
                               <button
                                 onClick={() => handleBuyArtifact(art)}
-                                className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow"
+                                className="w-full py-2 rounded-xl jade-button-primary text-white font-bold transition-all shadow font-xianxia"
                               >
                                 Trang Bị Ngay
                               </button>
                             ) : !isRealmMet ? (
-                              <div className="w-full py-2 rounded-xl bg-slate-900 text-slate-500 border border-slate-800 text-center flex items-center justify-center gap-1.5">
+                              <div className="w-full py-2 rounded-xl bg-[#021310] text-emerald-600 border border-emerald-500/20 text-center flex items-center justify-center gap-1.5 font-xianxia">
                                 <Lock className="w-3.5 h-3.5" />
                                 <span>Cần Cảnh Giới Cấp {art.minRealmLevel}</span>
                               </div>
@@ -678,10 +719,10 @@ export default function ShopModal({
                               <button
                                 onClick={() => handleBuyArtifact(art)}
                                 disabled={!canAfford}
-                                className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                                className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all font-xianxia ${
                                   canAfford
-                                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-950/40'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                                    ? 'jade-button-primary shadow-md'
+                                    : 'bg-[#021310] text-emerald-600 cursor-not-allowed border border-emerald-500/20'
                                 }`}
                               >
                                 <span>Thu Phục ({art.price} 💎)</span>
@@ -701,7 +742,7 @@ export default function ShopModal({
           {activeTab === 'titles' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-slate-400">
+                <p className="text-emerald-300/80">
                   Sắc phong danh hiệu thượng cổ với huy hiệu ảnh (GIF / PNG) độc tôn.
                 </p>
                 {onOpenAdmin && (
@@ -710,7 +751,7 @@ export default function ShopModal({
                       onClose();
                       onOpenAdmin();
                     }}
-                    className="text-[11px] text-amber-400 hover:text-amber-300 underline font-medium"
+                    className="text-[11px] text-teal-300 hover:underline font-medium font-xianxia"
                   >
                     + Thêm Danh Hiệu (Admin)
                   </button>
@@ -718,7 +759,7 @@ export default function ShopModal({
               </div>
 
               {customTitles.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800 text-center text-slate-400">
+                <div className="p-8 rounded-2xl bg-[#041a17]/50 border border-emerald-500/20 text-center text-emerald-300/60 font-xianxia">
                   Chưa có Danh Hiệu Ảnh nào được niêm yết trong Tiên Các.
                 </div>
               ) : (
@@ -735,14 +776,14 @@ export default function ShopModal({
                         key={title.id}
                         className={`p-3.5 rounded-2xl border transition-all flex items-start gap-3.5 ${
                           isEquipped
-                            ? 'border-amber-400 bg-amber-950/30 shadow-lg'
+                            ? 'border-teal-400 bg-emerald-950/60 shadow-lg'
                             : isOwned
-                            ? 'border-slate-700 bg-slate-900/70'
-                            : 'border-slate-800 bg-slate-900/40'
+                            ? 'border-emerald-500/40 bg-[#062520]/80'
+                            : 'border-emerald-500/25 bg-[#041a17]/60'
                         }`}
                       >
                         {title.badgeImageUrl ? (
-                          <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-amber-500/40 bg-slate-950 shadow-md">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-emerald-500/40 bg-[#021310] shadow-md">
                             <img src={title.badgeImageUrl} alt={title.name} className="w-full h-full object-cover" />
                           </div>
                         ) : (
@@ -752,41 +793,41 @@ export default function ShopModal({
                         <div className="flex-1 min-w-0 space-y-1.5 flex flex-col justify-between">
                           <div>
                             <div className="flex items-center justify-between">
-                              <h4 className={`font-bold text-sm truncate ${title.textColor}`}>{title.name}</h4>
-                              <span className="font-mono text-cyan-300 font-bold text-xs">
+                              <h4 className={`font-bold text-sm truncate font-xianxia ${title.textColor}`}>{title.name}</h4>
+                              <span className="font-mono text-teal-300 font-bold text-xs">
                                 💎 {price.toLocaleString()}
                               </span>
                             </div>
-                            <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                            <p className="text-[11px] text-emerald-200/70 line-clamp-2 leading-relaxed">
                               {title.description}
                             </p>
                           </div>
 
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-800/60">
-                            <span className="text-[10px] text-slate-500">
+                          <div className="pt-2 flex items-center justify-between border-t border-emerald-500/20">
+                            <span className="text-[10px] text-emerald-400/60">
                               Cần Cảnh Giới Cấp {title.unlockedAtRealm}
                             </span>
                             {isEquipped ? (
-                              <span className="text-[10px] font-bold text-amber-300">✓ Đang Đeo</span>
+                              <span className="text-[10px] font-bold text-teal-300 font-xianxia">✓ Đang Đeo</span>
                             ) : isOwned ? (
                               <button
                                 onClick={() => handleBuyTitle(title)}
-                                className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px]"
+                                className="px-3 py-1 rounded-xl jade-button-primary text-white font-bold text-[10px] font-xianxia"
                               >
                                 Đeo Ngay
                               </button>
                             ) : !isRealmMet ? (
-                              <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                              <span className="text-[10px] text-emerald-500 flex items-center gap-1 font-xianxia">
                                 <Lock className="w-3 h-3" /> Chưa Đủ Cấp
                               </span>
                             ) : (
                               <button
                                 onClick={() => handleBuyTitle(title)}
                                 disabled={!canAfford}
-                                className={`px-3 py-1 rounded-lg font-bold text-[10px] ${
+                                className={`px-3 py-1 rounded-xl font-bold text-[10px] font-xianxia ${
                                   canAfford
-                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    ? 'jade-button-primary text-white'
+                                    : 'bg-[#021310] text-emerald-600 cursor-not-allowed'
                                 }`}
                               >
                                 Mua ({price} 💎)
@@ -805,7 +846,7 @@ export default function ShopModal({
           {/* TAB 3: ĐAN DƯỢC */}
           {activeTab === 'pills' && (
             <div className="space-y-4">
-              <p className="text-slate-400">
+              <p className="text-emerald-300/80">
                 Đan dược thượng phẩm gia tăng 15% xác suất độ kiếp thành công khi đột phá cảnh giới mới.
               </p>
 
@@ -815,29 +856,29 @@ export default function ShopModal({
                     name: 'Tụ Khí Đan',
                     price: 60,
                     desc: 'Dùng cho đột phá Luyện Khí Kỳ -> Trúc Cơ Kỳ.',
-                    color: 'text-emerald-400',
+                    color: 'text-emerald-300',
                     border: 'border-emerald-500/30',
                   },
                   {
                     name: 'Trúc Cơ Đan',
                     price: 180,
                     desc: 'Dùng cho đột phá Trúc Cơ Kỳ -> Kim Đan Kỳ.',
-                    color: 'text-cyan-400',
-                    border: 'border-cyan-500/30',
+                    color: 'text-teal-300',
+                    border: 'border-teal-500/30',
                   },
                   {
                     name: 'Hàng Long Kim Đan',
                     price: 450,
                     desc: 'Dùng cho đột phá Kim Đan -> Nguyên Anh.',
-                    color: 'text-amber-400',
-                    border: 'border-amber-500/30',
+                    color: 'text-emerald-200',
+                    border: 'border-emerald-400/30',
                   },
                   {
                     name: 'Cửu Chuyển Hoàn Hồn Đan',
                     price: 1200,
                     desc: 'Dùng cho đột phá các đại cảnh giới thượng thừa.',
-                    color: 'text-purple-400',
-                    border: 'border-purple-500/30',
+                    color: 'text-white',
+                    border: 'border-emerald-300/40',
                   },
                 ].map((pill) => {
                   const ownedCount = user.pills[pill.name] || 0;
@@ -846,26 +887,26 @@ export default function ShopModal({
                   return (
                     <div
                       key={pill.name}
-                      className={`p-4 rounded-xl border bg-slate-900/60 flex flex-col justify-between space-y-3 ${pill.border}`}
+                      className={`p-4 rounded-xl border bg-[#062420]/80 flex flex-col justify-between space-y-3 ${pill.border}`}
                     >
                       <div>
                         <div className="flex items-center justify-between">
-                          <h4 className={`font-bold ${pill.color}`}>{pill.name}</h4>
-                          <span className="text-[10px] text-slate-400">Có: {ownedCount}</span>
+                          <h4 className={`font-bold font-xianxia ${pill.color}`}>{pill.name}</h4>
+                          <span className="text-[10px] text-emerald-400/80">Có: {ownedCount}</span>
                         </div>
-                        <div className="font-mono text-cyan-300 font-bold text-xs mt-1">
+                        <div className="font-mono text-teal-300 font-bold text-xs mt-1">
                           💎 {pill.price} Linh Thạch
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1.5">{pill.desc}</p>
+                        <p className="text-[11px] text-emerald-200/70 mt-1.5">{pill.desc}</p>
                       </div>
 
                       <button
                         onClick={() => handleBuyPill(pill.name, pill.price)}
                         disabled={!canAfford}
-                        className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
+                        className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all font-xianxia ${
                           canAfford
-                            ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-amber-400'
-                            : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-slate-800'
+                            ? 'bg-emerald-950 hover:bg-emerald-900 text-teal-100 border border-emerald-500/40'
+                            : 'bg-[#021310] text-emerald-600 cursor-not-allowed border border-emerald-500/20'
                         }`}
                       >
                         <span>Mua 1 Viên</span>

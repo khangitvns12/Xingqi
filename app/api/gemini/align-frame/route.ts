@@ -4,16 +4,16 @@ import { NextRequest, NextResponse } from "next/server";
 // Fallback alignment when API key is not configured or in case of transient errors
 function generateFallbackAlignment(errorReason?: string) {
   return {
-    scale: 1.40,
+    scale: 1.15,
     offsetX: 0,
     offsetY: 0,
     glowColor: '#f59e0b',
     suggestedName: 'Càn Khôn Hộ Thể Khung',
     rarity: 'Cực Phẩm',
-    description: 'Khung viền được điêu khắc từ huyền thiết cửu thiên, tự động bảo vệ tâm thức đạo hữu.',
+    description: 'Khung viền được điêu khắc từ huyền thiết cửu thiên, ôm trọn và hộ vệ tâm thức đạo hữu từ bên ngoài.',
     explanation: errorReason
-      ? `Đã sử dụng bộ canh chỉnh tự động cục bộ: Tâm khung viền chuẩn xác tỉ lệ 1.40x (${errorReason}).`
-      : 'Đã tự động xác định tâm đối xứng của khung viền và căn tỉ lệ 1.40x để vừa khít vòng tròn avatar.',
+      ? `Đã sử dụng bộ canh chỉnh tự động cục bộ: Khung viền bao trọn bên ngoài avatar tỉ lệ 1.15x (${errorReason}).`
+      : 'Đã tự động xác định tâm đối xứng và căn tỉ lệ 1.15x để khung viền nằm hoàn hảo ở BÊN NGOÀI avatar, avatar sáng rõ bên trong.',
   };
 }
 
@@ -54,17 +54,17 @@ export async function POST(req: NextRequest) {
     });
 
     const prompt = `Bạn là Chuyên gia Đồ họa & AI Canh Chỉnh Avatar Tiên Hiệp.
-Hình ảnh đính kèm là một KHUNG VIỀN AVATAR (đã tách nền trong suốt dạng PNG). Khung viền này sẽ được đặt đè lên trên một ảnh avatar tròn của người chơi.
+Hình ảnh đính kèm là một KHUNG VIỀN AVATAR (đã tách nền trong suốt dạng PNG). Khung viền này sẽ được đặt bao bọc ở BÊN NGOÀI một ảnh avatar tròn của người chơi.
 
 Nhiệm vụ của bạn:
 1. Phân tích vùng trống tròn ở giữa (aperture/lỗ khuyết trung tâm nơi khuôn mặt avatar người chơi sẽ xuất hiện).
-2. Tính toán hệ số phóng đại (scale) tối ưu cho khung viền so với đường kính avatar (chuẩn là từ 1.25 đến 1.65, mặc định khoảng 1.40) để avatar vừa khít khắn bên trong khung, không bị che mất viền trong hoặc hở mép.
+2. Tính toán hệ số phóng đại (scale) tối ưu cho khung viền so với avatar (chuẩn là từ 1.05 đến 1.35, mặc định khoảng 1.15) để khung viền nằm bao bọc hoàn toàn ở BÊN NGOÀI avatar, avatar nằm gọn gàng bên trong tâm khuyết, không bị viền khung ăn lồng vào khuôn mặt.
 3. Tính toán độ dịch chuyển tâm offsetX (từ -25 đến +25 pixel) và offsetY (từ -25 đến +25 pixel) nếu lỗ khuyết bị lệch tâm so với tổng thể ảnh.
 4. Trích xuất màu phát sáng chủ đạo (glowColor) theo mã hex (ví dụ #f59e0b màu hoàng kim, #10b981 màu ngọc bích, #06b6d4 màu lam băng, #c084fc màu tử lôi, #f43f5e màu chu hỏa).
 5. Đặt tên Tiên Hiệp thật hay cho khung viền (suggestedName) phù hợp với hình dáng (Long, Phượng, Bát Quái, Hoa Sen, Kiếm Khí, Lôi Đình, Băng Tinh, Ma Diễm...).
 6. Đề xuất phẩm cấp độ hiếm (rarity): "Thượng Phẩm" | "Cực Phẩm" | "Tiên Phẩm" | "Thần Phẩm".
 7. Viết mô tả tiên hiệp ngắn gọn (description) khoảng 1-2 câu.
-8. Viết giải thích ngắn về cách bạn đã canh chỉnh (explanation), ví dụ: "Đã phát hiện tâm khung viền lệch 1px lên trên, tự động điều chỉnh tỉ lệ 1.42x để ôm sát vòng tròn avatar!".`;
+8. Viết giải thích ngắn về cách bạn đã canh chỉnh (explanation), ví dụ: "Đã phát hiện tâm khung viền lệch 1px lên trên, tự động điều chỉnh tỉ lệ 1.16x để khung viền ôm trọn hoàn hảo ở bên ngoài avatar!".`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash',
@@ -88,7 +88,7 @@ Nhiệm vụ của bạn:
           properties: {
             scale: {
               type: Type.NUMBER,
-              description: 'Tỉ lệ phóng to tối ưu cho khung viền (từ 1.25 đến 1.65, chuẩn là 1.38 - 1.45)',
+              description: 'Tỉ lệ phóng to tối ưu cho khung viền (từ 1.00 đến 1.35, chuẩn là 1.10 - 1.20 để khung viền bao trọn bên ngoài avatar)',
             },
             offsetX: {
               type: Type.NUMBER,

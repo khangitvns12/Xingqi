@@ -43,7 +43,9 @@ export default function AvatarWithFrame({
 
   // Proportional offset calculation: normalize based on baseline size (80px standard editor preview)
   const ratio = config.px / 80;
-  const frameScale = customFrame?.scale ?? 1.36;
+  const baseScale = customFrame?.scale ?? 1.15;
+  // Normalize legacy scale (> 1.30) so frame fits symmetrically on the outside without over-stretching
+  const frameScale = baseScale > 1.30 ? Number((baseScale * 0.85).toFixed(2)) : baseScale;
   const tx = Math.round((customFrame?.offsetX ?? 0) * ratio);
   const ty = Math.round((customFrame?.offsetY ?? 0) * ratio);
   const glowColor = customFrame?.glowColor || '#f59e0b';
@@ -62,15 +64,17 @@ export default function AvatarWithFrame({
       className={`relative inline-flex items-center justify-center shrink-0 select-none ${config.containerClass} ${className}`}
       style={{ width: `${config.px}px`, height: `${config.px}px` }}
     >
-      {/* 1. Underlying Base Avatar Circle - strictly centered & circular */}
+      {/* 1. Underlying Base Avatar Circle - fitted cleanly inside the frame when equipped */}
       <div
-        className={`relative w-full h-full rounded-full aspect-square overflow-hidden transition-all duration-300 ring-2 ring-white/10 ${
-          customFrame ? '' : realm.avatarGlowCss
+        className={`rounded-full aspect-square overflow-hidden transition-all duration-300 ${
+          customFrame
+            ? 'absolute inset-0 m-auto w-[74%] h-[74%] z-0 ring-1 ring-white/20'
+            : `relative w-full h-full ring-2 ring-white/10 ${realm.avatarGlowCss}`
         }`}
         style={
           customFrame
             ? {
-                boxShadow: `0 0 14px ${glowColor}66, inset 0 0 6px ${glowColor}33`,
+                boxShadow: `0 0 10px ${glowColor}40`,
                 borderColor: glowColor,
               }
             : {}
@@ -84,7 +88,7 @@ export default function AvatarWithFrame({
         />
       </div>
 
-      {/* 2. Custom Frame Overlay - Exactly co-centric with the avatar */}
+      {/* 2. Custom Frame Overlay - strictly positioned ON THE OUTSIDE of the avatar */}
       {customFrame && (
         <div
           className="absolute inset-0 pointer-events-none flex items-center justify-center origin-center transition-transform duration-100 z-10"

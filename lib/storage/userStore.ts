@@ -437,6 +437,13 @@ export function saveUserProfile(user: UserAccount): void {
         accounts.push(updatedAccount);
       }
       localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+
+      // Asynchronously sync active account to cloud server
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SYNC_ACCOUNT', account: updatedAccount }),
+      }).catch(() => {});
     }
     notifyUserChange();
   } catch {
@@ -473,8 +480,94 @@ export function saveAllAccounts(accounts: UserAccount[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+    // Asynchronously sync all accounts to cloud server
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'FULL_MERGE', payload: { accounts } }),
+    }).catch(() => {});
   } catch {
     // fallback
+  }
+}
+
+/**
+ * Sync user accounts from cloud server.
+ * Merges server accounts with local storage and updates current user if newer.
+ */
+export async function syncUserFromCloud(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  try {
+    const res = await fetch('/api/sync');
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.accounts)) return false;
+
+    const localAccounts = loadAllAccounts();
+    const map = new Map<string, UserAccount>();
+
+    // Seed local accounts
+    localAccounts.forEach((acc) => map.set(acc.id, acc));
+
+    // Merge or overwrite with cloud accounts
+    data.accounts.forEach((serverAcc: UserAccount) => {
+      const local = map.get(serverAcc.id);
+      if (!local) {
+        map.set(serverAcc.id, serverAcc);
+      } else {
+        // Merge unlocked items sets so no unlocks on either device are lost
+        const mergedUnlockedFrames = Array.from(new Set([...(local.unlockedFrameIds || []), ...(serverAcc.unlockedFrameIds || [])]));
+        const mergedUnlockedDharma = Array.from(new Set([...(local.unlockedDharmaIds || []), ...(serverAcc.unlockedDharmaIds || [])]));
+        const mergedUnlockedArtifacts = Array.from(new Set([...(local.unlockedArtifactIds || []), ...(serverAcc.unlockedArtifactIds || [])]));
+        const mergedUnlockedTitles = Array.from(new Set([...(local.unlockedTitleIds || []), ...(serverAcc.unlockedTitleIds || [])]));
+        const mergedUnlockedAvatars = Array.from(new Set([...(local.unlockedAvatarIds || []), ...(serverAcc.unlockedAvatarIds || [])]));
+
+        // Check which device has newer activity
+        const serverIsNewer = (serverAcc.lastActive || 0) >= (local.lastActive || 0);
+        const primary = serverIsNewer ? serverAcc : local;
+        const secondary = serverIsNewer ? local : serverAcc;
+
+        map.set(serverAcc.id, {
+          ...secondary,
+          ...primary,
+          unlockedFrameIds: mergedUnlockedFrames,
+          unlockedDharmaIds: mergedUnlockedDharma,
+          unlockedArtifactIds: mergedUnlockedArtifacts,
+          unlockedTitleIds: mergedUnlockedTitles,
+          unlockedAvatarIds: mergedUnlockedAvatars,
+          selectedFrameId: primary.selectedFrameId || secondary.selectedFrameId,
+          selectedDharmaId: primary.selectedDharmaId || secondary.selectedDharmaId,
+          selectedArtifactId: primary.selectedArtifactId || secondary.selectedArtifactId,
+          selectedTitleId: primary.selectedTitleId || secondary.selectedTitleId,
+          selectedAvatarId: primary.selectedAvatarId || secondary.selectedAvatarId,
+          spiritStones: Math.max(local.spiritStones || 0, serverAcc.spiritStones || 0),
+          elo: primary.elo || secondary.elo,
+          exp: Math.max(local.exp || 0, serverAcc.exp || 0),
+          realmLevel: Math.max(local.realmLevel || 1, serverAcc.realmLevel || 1),
+        });
+      }
+    });
+
+    const mergedAccounts = Array.from(map.values());
+    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(mergedAccounts));
+
+    // Check if currently active user was updated in cloud
+    const current = getUserSnapshot();
+    if (current && !current.isGuest && current.id !== GUEST_USER.id) {
+      const matched = mergedAccounts.find((a) => a.id === current.id || a.username.toLowerCase() === current.username.toLowerCase());
+      if (matched) {
+        const raw = JSON.stringify(matched);
+        localStorage.setItem(STORAGE_KEY, raw);
+        cachedUserRaw = raw;
+        cachedUser = matched;
+        notifyUserChange();
+      }
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('[Sync] Could not pull accounts from cloud:', err);
+    return false;
   }
 }
 
