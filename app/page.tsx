@@ -25,7 +25,9 @@ import {
   loadUserProfile,
   checkUserKicked,
   logoutUser,
+  syncUserFromCloud,
 } from '../lib/storage/userStore';
+import { syncItemsFromCloud } from '../lib/cultivation/shopAndFrames';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import { soundManager } from '../lib/audio/soundFx';
 import { AiCultivator } from '../lib/xiangqi/ai';
@@ -56,6 +58,13 @@ export default function HomePage() {
 
   // Online cultivators count (statically initialized to 24 to guarantee matching SSR & client initial render)
   const [onlineCount, setOnlineCount] = useState<number>(24);
+
+  // Automatically sync all accounts, custom items, and settings from cloud database on startup
+  useEffect(() => {
+    Promise.all([syncUserFromCloud(), syncItemsFromCloud()]).catch((err) => {
+      console.warn('[Sync] Initial cloud sync warning:', err);
+    });
+  }, []);
 
   // Keep online cultivators count updated in real-time
   useEffect(() => {

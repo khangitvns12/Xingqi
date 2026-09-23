@@ -116,8 +116,10 @@ export default function AuthModal({
       const unlockedTitles = Array.from(new Set(['title_1', sysConfig.defaultTitleId || 'title_1']));
       const unlockedAvatars = Array.from(new Set(['av_1', sysConfig.defaultAvatarId || 'av_1']));
 
+      setIsSyncing(true);
+      const now = Date.now();
       const newAccount: UserAccount = {
-        id: 'user_' + Date.now(),
+        id: 'user_' + now,
         username: username.trim(),
         password: password.trim(),
         daoName: daoName.trim(),
@@ -147,18 +149,25 @@ export default function AuthModal({
           maxWinStreak: 0,
           highestElo: sysConfig.defaultElo || 1200,
         },
-        createdAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
+        lastActive: now,
       };
 
-      // Push to server cloud immediately
+      // Push to server cloud immediately and await confirmation
       try {
-        await fetch('/api/sync', {
+        const res = await fetch('/api/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'SYNC_ACCOUNT', account: newAccount }),
         });
+        if (!res.ok) {
+          console.warn('Server sync warning:', res.status);
+        }
       } catch (err) {
         console.warn('Could not sync newly registered user immediately:', err);
+      } finally {
+        setIsSyncing(false);
       }
 
       onRegisterAccount(newAccount);
