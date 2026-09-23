@@ -451,7 +451,10 @@ export function saveUserProfile(user: UserAccount): void {
   }
 }
 
+let memoryAccounts: UserAccount[] | null = null;
+
 export function loadAllAccounts(): UserAccount[] {
+  if (memoryAccounts) return memoryAccounts;
   if (typeof window === 'undefined') return SEED_ACCOUNTS;
   try {
     const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
@@ -464,19 +467,23 @@ export function loadAllAccounts(): UserAccount[] {
           parsed.unshift(ADMIN_USER);
           localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(parsed));
         }
+        memoryAccounts = parsed;
         return parsed;
       }
     }
     // First time init
     localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(SEED_ACCOUNTS));
+    memoryAccounts = SEED_ACCOUNTS;
     return SEED_ACCOUNTS;
   } catch {
     // fallback
   }
+  memoryAccounts = SEED_ACCOUNTS;
   return SEED_ACCOUNTS;
 }
 
 export function saveAllAccounts(accounts: UserAccount[]): void {
+  memoryAccounts = accounts;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
@@ -549,6 +556,7 @@ export async function syncUserFromCloud(): Promise<boolean> {
     });
 
     const mergedAccounts = Array.from(map.values());
+    memoryAccounts = mergedAccounts;
     localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(mergedAccounts));
 
     // Check if currently active user was updated in cloud

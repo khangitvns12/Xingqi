@@ -24,7 +24,7 @@ const PIXEL_SIZES: Record<string, { px: number; containerClass: string; dotClass
   '2xl': { px: 104, containerClass: 'w-[104px] h-[104px]', dotClass: 'w-5 h-5 bottom-1.5 right-1.5' },
 };
 
-export default function AvatarWithFrame({
+const AvatarWithFrame = React.memo(function AvatarWithFrame({
   avatarUrl,
   daoName = 'Đạo Hữu',
   realmLevel = 1,
@@ -166,5 +166,7 @@ export default function AvatarWithFrame({
       )}
     </div>
   );
-}
+});
+
+export default AvatarWithFrame;
 

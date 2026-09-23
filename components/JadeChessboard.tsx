@@ -17,7 +17,7 @@ interface JadeChessboardProps {
   className?: string;
 }
 
-export default function JadeChessboard({ className = '' }: JadeChessboardProps) {
+const JadeChessboard = React.memo(function JadeChessboard({ className = '' }: JadeChessboardProps) {
   // 9 Columns (c = 0..8): center at (c + 0.5) * (800 / 9)
   const colWidth = 800 / 9; // 88.8888...
   const colX = (c: number) => (c + 0.5) * colWidth;
@@ -589,4 +589,6 @@ export default function JadeChessboard({ className = '' }: JadeChessboardProps) 
       </g>
     </svg>
   );
-}
+});
+
+export default JadeChessboard;

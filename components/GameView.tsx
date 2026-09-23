@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Swords,
@@ -27,6 +27,10 @@ import {
   ZoomOut,
   Maximize2,
 } from 'lucide-react';
+import GamePlayerBar from './game/GamePlayerBar';
+import GameActionButtons from './game/GameActionButtons';
+import GameMoveHistory from './game/GameMoveHistory';
+import GameOverModal from './game/GameOverModal';
 import {
   BoardState,
   GamePlayer,
@@ -98,10 +102,10 @@ export default function GameView({
   const [showAdvantageBar, setShowAdvantageBar] = useState<boolean>(true);
 
   // Real-time board advantage evaluation
-  const advantage = evaluateAdvantage(board);
+  const advantage = useMemo(() => evaluateAdvantage(board), [board]);
 
   // Derived check status
-  const isCheck = isSideInCheck(board, currentTurn);
+  const isCheck = useMemo(() => isSideInCheck(board, currentTurn), [board, currentTurn]);
 
   // Timers (in seconds; 0 means unlimited)
   const initialTime = room.timeLimit === 0 ? 0 : room.timeLimit * 60;
@@ -627,76 +631,15 @@ export default function GameView({
         {/* Board Container (8 cols on desktop) */}
         <div className="lg:col-span-8 flex flex-col items-center space-y-3">
           {/* Opponent Player Bar */}
-          <div
-            className={`w-full max-w-[560px] flex items-center justify-between px-3 sm:px-4 py-2 rounded-xl border transition-all ${
-              currentTurn === opponentPlayer.side
-                ? 'bg-gradient-to-r from-[#082a25] via-[#0b3831] to-[#082a25] border-teal-400/80 shadow-[0_0_15px_rgba(20,184,166,0.3)]'
-                : 'bg-[#041d1a]/90 border-emerald-500/20'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              {/* Perfectly Centered Avatar with Cultivation Frame */}
-              <AvatarWithFrame
-                avatarUrl={opponentPlayer.avatarUrl}
-                daoName={opponentPlayer.name}
-                realmLevel={opponentPlayer.realmLevel || 2}
-                size="sm"
-                isOnline={true}
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-white truncate">
-                    {opponentPlayer.name}
-                  </span>
-                  {opponentPlayer.isAi && (
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-950 text-teal-300 border border-emerald-500/40 font-bold flex items-center gap-1 font-sans">
-                      <Bot className="w-3 h-3 text-teal-300" />
-                      <span>Cấp {opponentPlayer.aiDifficultyLevel || opponentPlayer.realmLevel || 2}</span>
-                    </span>
-                  )}
-                  <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-sans ${
-                      opponentPlayer.side === 'red'
-                        ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                        : 'bg-teal-950 text-teal-300 border border-teal-500/40'
-                    }`}
-                  >
-                    {opponentPlayer.side === 'red' ? 'Hồng (Tiên)' : 'Hắc (Hậu)'}
-                  </span>
-                </div>
-                <div className="text-[10px] text-teal-300/80 truncate">
-                  {opponentPlayer.title} • {opponentPlayer.realm} ({opponentPlayer.elo} ELO)
-                </div>
-                {/* Captured pieces by opponent */}
-                <div className="flex items-center gap-1 mt-0.5 h-4">
-                  {(opponentPlayer.side === 'red' ? capturedRed : capturedBlack).slice(-6).map((p, i) => (
-                    <span key={i} className="text-[10px] text-emerald-300 bg-[#021310] px-1 rounded border border-emerald-500/20">
-                      {getPieceCharVi(p)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Timer & Turn Indicator */}
-            <div className="flex items-center gap-2">
-              {currentTurn === opponentPlayer.side && (
-                <span className="hidden sm:inline-block text-[10px] font-semibold text-teal-300 animate-pulse">
-                  {isAiThinking ? 'Đang cảm ngộ...' : 'Đang suy nghĩ...'}
-                </span>
-              )}
-              <div
-                className={`font-mono text-sm sm:text-base font-bold px-2.5 sm:px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
-                  currentTurn === opponentPlayer.side
-                    ? 'bg-teal-950/80 text-teal-200 border-teal-500/60 animate-pulse'
-                    : 'bg-[#021310] text-emerald-400/60 border-emerald-900/40'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>{formatTime(opponentPlayer.side === 'red' ? redTime : blackTime)}</span>
-              </div>
-            </div>
-          </div>
+          <GamePlayerBar
+            player={opponentPlayer}
+            isCurrentTurn={currentTurn === opponentPlayer.side}
+            timeLeft={opponentPlayer.side === 'red' ? redTime : blackTime}
+            initialTime={initialTime}
+            capturedPieces={opponentPlayer.side === 'red' ? capturedRed : capturedBlack}
+            isAiThinking={isAiThinking}
+            isSelf={false}
+          />
 
           {/* Real-time Advantage Bar */}
           {showAdvantageBar && (
@@ -920,71 +863,14 @@ export default function GameView({
           </div>
 
           {/* Current User Player Bar */}
-          <div
-            className={`w-full max-w-[560px] flex items-center justify-between px-3 sm:px-4 py-2 rounded-xl border transition-all ${
-              currentTurn === myPlayer.side
-                ? 'bg-gradient-to-r from-[#082a25] via-[#0b3831] to-[#082a25] border-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                : 'bg-[#041d1a]/90 border-emerald-500/20'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              {/* Perfectly Centered Avatar with Cultivation Frame */}
-              <AvatarWithFrame
-                avatarUrl={myPlayer.avatarUrl}
-                daoName={myPlayer.name}
-                realmLevel={myPlayer.realmLevel || currentUser.realmLevel}
-                frameId={currentUser.selectedFrameId}
-                size="sm"
-                isOnline={true}
-              />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-white truncate">
-                    {myPlayer.name} (Bạn)
-                  </span>
-                  <span
-                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold font-sans ${
-                      myPlayer.side === 'red'
-                        ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
-                        : 'bg-teal-950 text-teal-300 border border-teal-500/40'
-                    }`}
-                  >
-                    {myPlayer.side === 'red' ? 'Hồng (Tiên)' : 'Hắc (Hậu)'}
-                  </span>
-                </div>
-                <div className="text-[10px] text-teal-300/80 truncate">
-                  {myPlayer.title} • {myPlayer.realm} ({myPlayer.elo} ELO)
-                </div>
-                {/* Captured pieces by you */}
-                <div className="flex items-center gap-1 mt-0.5 h-4">
-                  {(myPlayer.side === 'red' ? capturedRed : capturedBlack).slice(-6).map((p, i) => (
-                    <span key={i} className="text-[10px] text-emerald-300 bg-[#021310] px-1 rounded border border-emerald-500/20">
-                      {getPieceCharVi(p)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Timer & Turn Indicator */}
-            <div className="flex items-center gap-2">
-              {currentTurn === myPlayer.side && (
-                <span className="hidden sm:inline-block text-[10px] font-semibold text-emerald-400 animate-pulse">
-                  Đến lượt bạn xuất chiêu!
-                </span>
-              )}
-              <div
-                className={`font-mono text-sm sm:text-base font-bold px-2.5 sm:px-3 py-1 rounded-lg border flex items-center gap-1.5 ${
-                  currentTurn === myPlayer.side
-                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/60 animate-pulse'
-                    : 'bg-[#021310] text-emerald-400/60 border-emerald-900/40'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5" />
-                <span>{formatTime(myPlayer.side === 'red' ? redTime : blackTime)}</span>
-              </div>
-            </div>
-          </div>
+          <GamePlayerBar
+            player={myPlayer}
+            isCurrentTurn={currentTurn === myPlayer.side}
+            timeLeft={myPlayer.side === 'red' ? redTime : blackTime}
+            initialTime={initialTime}
+            capturedPieces={myPlayer.side === 'red' ? capturedRed : capturedBlack}
+            isSelf={true}
+          />
 
           {/* Mobile Quick Action Buttons bar (visible on small screens) */}
           <div className="lg:hidden w-full max-w-[560px] grid grid-cols-4 gap-1.5 pt-1 text-xs">
@@ -1053,203 +939,46 @@ export default function GameView({
         {/* Right Sidebar: Move History, In-Game Controls & Banter (4 cols) */}
         <div className="lg:col-span-4 space-y-4">
           {/* Action Control Buttons */}
-          <div className="bg-[#0d1424] border border-slate-800 rounded-xl p-3.5 space-y-2.5">
-            <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-              <Swords className="w-4 h-4 text-amber-400" />
-              <span>Pháp Lệnh Bàn Cờ</span>
-            </h4>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                onClick={handleOfferDraw}
-                disabled={gameOver}
-                className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-              >
-                <Handshake className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Cầu Hòa</span>
-              </button>
-
-              <button
-                onClick={handleResign}
-                disabled={gameOver}
-                className="py-2 px-3 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/30 font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-              >
-                <Flag className="w-3.5 h-3.5 text-rose-400" />
-                <span>Nhận Thua</span>
-              </button>
-
-              {opponentPlayer.isAi && (
-                <>
-                  {/* Hint Button */}
-                  <button
-                    onClick={handleGetHint}
-                    disabled={gameOver || currentTurn !== mySide}
-                    className="col-span-1 py-2 px-3 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
-                    title="Nhận gợi ý nước đi tối ưu (Thiên Cơ Chỉ Điểm)"
-                  >
-                    <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Gợi Ý Nước Đi</span>
-                  </button>
-
-                  {/* Swap Sides with Bot */}
-                  <button
-                    onClick={handleSwapSideWithBot}
-                    disabled={gameOver}
-                    className="col-span-1 py-2 px-3 rounded-lg bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-500/30 font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
-                    title="Đổi bên cầm quân với bot để thử nghiệm thế cờ"
-                  >
-                    <Shuffle className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Đổi Bên</span>
-                  </button>
-
-                  {/* Takeback */}
-                  <button
-                    onClick={handleTakeback}
-                    disabled={gameOver || moveHistory.length < 2}
-                    className="col-span-2 py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
-                    title="Đi lại 1 nước (Chỉ áp dụng khi luyện cờ với AI)"
-                  >
-                    <Repeat className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Xin Đi Lại (Hồi Cờ Luận Đạo)</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          <GameActionButtons
+            gameOver={gameOver}
+            isAi={Boolean(opponentPlayer.isAi)}
+            currentTurn={currentTurn}
+            mySide={mySide}
+            historyLength={moveHistory.length}
+            onOfferDraw={handleOfferDraw}
+            onResign={handleResign}
+            onGetHint={handleGetHint}
+            onSwapSides={handleSwapSideWithBot}
+            onTakeback={handleTakeback}
+          />
 
           {/* Move History Transcript */}
-          <div className="bg-[#0d1424] border border-slate-800 rounded-xl p-3.5 flex flex-col h-[280px]">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-slate-200">
-              <div className="flex items-center gap-1.5">
-                <History className="w-4 h-4 text-purple-400" />
-                <span>Biên Bản Ván Đấu</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">
-                {Math.ceil(moveHistory.length / 2)} Hiệp
-              </span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-2 space-y-1 text-xs font-mono">
-              {moveHistory.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">Khai bàn, vạn sự khởi đầu nan...</p>
-              ) : (
-                Array.from({ length: Math.ceil(moveHistory.length / 2) }).map((_, idx) => {
-                  const redMove = moveHistory[idx * 2];
-                  const blackMove = moveHistory[idx * 2 + 1];
-                  return (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-12 py-1 px-2 rounded hover:bg-slate-900/80 transition-colors text-[11px]"
-                    >
-                      <span className="col-span-2 text-slate-500 font-bold">{idx + 1}.</span>
-                      <span className="col-span-5 text-rose-300 font-medium truncate">
-                        {redMove?.notation || ''}
-                      </span>
-                      <span className="col-span-5 text-cyan-300 font-medium truncate">
-                        {blackMove?.notation || ''}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
+          <GameMoveHistory moveHistory={moveHistory} />
         </div>
       </div>
 
       {/* Game Over Modal with ELO & Cultivation Rewards */}
       {gameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-gradient-to-b from-[#082a25] via-[#051c18] to-[#031311] border-2 border-emerald-500/40 rounded-2xl p-6 shadow-[0_0_50px_rgba(4,28,24,0.9)] space-y-5 text-center relative overflow-hidden text-emerald-100 font-xianxia">
-            <div className="absolute -top-12 -left-12 w-36 h-36 rounded-full bg-teal-500/10 blur-2xl" />
-
-            <div className="space-y-2">
-              <div className="w-16 h-16 mx-auto rounded-full bg-emerald-950/80 border-2 border-teal-400 flex items-center justify-center text-teal-300 shadow-[0_0_20px_rgba(20,184,166,0.5)]">
-                {winner === mySide ? (
-                  <Trophy className="w-8 h-8 text-teal-300 animate-bounce" />
-                ) : (
-                  <Swords className="w-8 h-8 text-emerald-400/70" />
-                )}
-              </div>
-
-              <h2
-                className={`text-2xl font-extrabold text-glow-jade ${
-                  winner === mySide
-                    ? 'text-white'
-                    : winner === 'draw'
-                    ? 'text-teal-300'
-                    : 'text-rose-400'
-                }`}
-              >
-                {winner === mySide
-                  ? 'CHIẾN THẮNG ĐẮC ĐẠO!'
-                  : winner === 'draw'
-                  ? 'BẮT TAY HÒA HOÃN'
-                  : 'THẤT BẠI LĨNH NGỘ'}
-              </h2>
-              <p className="text-xs text-emerald-300/80">{gameOverReason}</p>
-            </div>
-
-            {/* Cultivation Rewards Breakdown */}
-            <div className="p-3.5 rounded-xl bg-[#031815] border border-emerald-500/30 space-y-2.5 text-xs text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-emerald-300/70">Kỳ Lực Đạo Hạnh (ELO):</span>
-                <span
-                  className={`font-mono font-bold text-sm ${
-                    winner === mySide
-                      ? 'text-emerald-400'
-                      : winner === 'draw'
-                      ? 'text-emerald-300'
-                      : 'text-rose-400'
-                  }`}
-                >
-                  {winner === mySide ? '+25 ELO' : winner === 'draw' ? '+0 ELO' : '-18 ELO'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-emerald-300/70">Tu Vi Tích Lũy:</span>
-                <span className="font-mono font-bold text-teal-300">
-                  +{winner === mySide ? '150' : winner === 'draw' ? '50' : '30'} Tu Vi
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-emerald-300/70">Linh Thạch Thu Hoạch:</span>
-                <span className="font-mono font-bold text-white">
-                  +{winner === mySide ? '50' : winner === 'draw' ? '15' : '5'} Linh Thạch
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                onClick={onReturnToLobby}
-                className="py-2.5 rounded-xl bg-[#031815] hover:bg-[#062923] text-emerald-200 border border-emerald-500/30 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                Về Sảnh Chờ
-              </button>
-              <button
-                onClick={() => {
-                  setBoard(INITIAL_BOARD);
-                  setMoveHistory([]);
-                  setSelectedPos(null);
-                  setValidMoves([]);
-                  setLastMove(null);
-                  setCurrentTurn('red');
-                  setGameOver(false);
-                  setWinner(null);
-                  setRedTime(initialTime);
-                  setBlackTime(initialTime);
-                  setCapturedRed([]);
-                  setCapturedBlack([]);
-                }}
-                className="py-2.5 rounded-xl jade-button-primary text-white font-bold text-xs shadow-lg transition-all cursor-pointer"
-              >
-                Tái Đấu Ván Mới
-              </button>
-            </div>
-          </div>
-        </div>
+        <GameOverModal
+          winner={winner}
+          mySide={mySide}
+          gameOverReason={gameOverReason}
+          onReturnToLobby={onReturnToLobby}
+          onRematch={() => {
+            setBoard(INITIAL_BOARD);
+            setMoveHistory([]);
+            setSelectedPos(null);
+            setValidMoves([]);
+            setLastMove(null);
+            setCurrentTurn('red');
+            setGameOver(false);
+            setWinner(null);
+            setRedTime(initialTime);
+            setBlackTime(initialTime);
+            setCapturedRed([]);
+            setCapturedBlack([]);
+          }}
+        />
       )}
     </div>
   );

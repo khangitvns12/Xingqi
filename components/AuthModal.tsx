@@ -193,12 +193,18 @@ export default function AuthModal({
       // Password verification
       if (found.username.toLowerCase() === 'admin') {
         if (password !== 'admin123') {
-          setErrorMsg('Mật khẩu quản trị viên không chính xác! (Mật khẩu mặc định: admin123)');
+          setErrorMsg('Mật khẩu quản trị viên không chính xác. Vui lòng kiểm tra lại!');
           return;
         }
-      } else if (found.password && password && found.password !== password) {
-        setErrorMsg('Mật khẩu đạo tịch không chính xác. Đạo hữu vui lòng nhập lại!');
-        return;
+      } else if (found.password) {
+        if (!password) {
+          setErrorMsg('Vui lòng nhập mật khẩu để đăng nhập vào đạo tịch này.');
+          return;
+        }
+        if (found.password !== password) {
+          setErrorMsg('Mật khẩu không chính xác. Đạo hữu vui lòng kiểm tra lại!');
+          return;
+        }
       }
 
       // Sync and pull down all items to ensure this device has everything
@@ -336,8 +342,10 @@ export default function AuthModal({
             <label className="block text-emerald-200/90 font-medium mb-1">Tên Tài Khoản (Đăng nhập máy tính & di động)</label>
             <input
               type="text"
-              placeholder="ví dụ: daohuuxian hoặc admin"
+              placeholder="Nhập tên tài khoản của đạo hữu..."
               value={username}
+              autoComplete="username"
+              spellCheck={false}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
               required
@@ -348,8 +356,9 @@ export default function AuthModal({
             <label className="block text-emerald-200/90 font-medium mb-1">Mật Khẩu Đạo Tịch</label>
             <input
               type="password"
-              placeholder="•••••••• (admin: admin123)"
+              placeholder="••••••••••••"
               value={password}
+              autoComplete={isRegister ? 'new-password' : 'current-password'}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-[#041c19] border border-emerald-500/40 rounded-xl px-3 py-2 text-white placeholder-emerald-600 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/50"
             />
@@ -417,57 +426,11 @@ export default function AuthModal({
           )}
         </div>
 
-        {/* List of existing accounts */}
-        {accounts.length > 0 && !isRegister && (
-          <div className="pt-3 border-t border-emerald-500/20 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-emerald-300/80 font-medium">Chọn nhanh tài khoản đã lưu:</span>
-              <span className="text-[10px] text-teal-300/90 font-mono">admin / admin123</span>
-            </div>
-            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-              {accounts.map((acc) => {
-                const isSelected = acc.id === currentUser.id;
-                const isAdmin = acc.role === 'admin' || acc.username === 'admin';
-                return (
-                  <div
-                    key={acc.id}
-                    onClick={() => {
-                      if (acc.isBanned) {
-                        setErrorMsg(`Tài khoản ${acc.daoName} đã bị cấm đăng nhập (Bị Ban).`);
-                        return;
-                      }
-                      onSwitchAccount(acc);
-                      onClose();
-                    }}
-                    className={`p-2 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                      acc.isBanned
-                        ? 'border-rose-900/60 bg-rose-950/30 text-rose-400 opacity-70 cursor-not-allowed'
-                        : isSelected
-                        ? 'border-teal-400 bg-emerald-950/60 text-white shadow-[0_0_12px_rgba(20,184,166,0.3)]'
-                        : 'border-emerald-500/20 bg-[#041c19]/60 text-emerald-100 hover:border-emerald-400/50 hover:bg-emerald-950/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-xianxia font-bold text-white">{acc.daoName}</span>
-                      <span className="text-[10px] text-emerald-400/80 font-mono">@{acc.username}</span>
-                      {isAdmin && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
-                          Admin
-                        </span>
-                      )}
-                      {acc.isBanned && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-rose-900/40 text-rose-300 border border-rose-700/60 font-bold">
-                          Bị Ban
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-teal-300 font-mono font-bold">{acc.elo} ELO</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Security assurance banner */}
+        <div className="pt-3 border-t border-emerald-500/20 text-[11px] text-emerald-400/80 flex items-center gap-2 justify-center">
+          <Shield className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+          <span>Bảo mật an toàn: Mật khẩu và đạo tịch được mã hóa đồng bộ an toàn.</span>
+        </div>
       </div>
     </div>
   );

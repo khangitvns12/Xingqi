@@ -295,23 +295,33 @@ const DHARMA_KEY = 'tien_ky_dharma_idols_v1';
 const ARTIFACTS_KEY = 'tien_ky_custom_artifacts_v1';
 const TITLES_KEY = 'tien_ky_custom_titles_v1';
 
+// In-memory cache to eliminate repetitive synchronous localStorage parsing lag
+let memoryFrames: CustomFrame[] | null = null;
+let memoryDharma: DharmaIdol[] | null = null;
+let memoryArtifacts: CustomArtifact[] | null = null;
+let memoryTitles: CustomTitle[] | null = null;
+
 export function loadCustomFrames(): CustomFrame[] {
+  if (memoryFrames) return memoryFrames;
   if (typeof window === 'undefined') return DEFAULT_FRAMES;
   try {
     const raw = localStorage.getItem(FRAMES_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryFrames = parsed;
         return parsed;
       }
     }
   } catch {
     // fallback
   }
+  memoryFrames = DEFAULT_FRAMES;
   return DEFAULT_FRAMES;
 }
 
 export function saveCustomFrames(frames: CustomFrame[]): void {
+  memoryFrames = frames;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(FRAMES_KEY, JSON.stringify(frames));
@@ -327,22 +337,26 @@ export function saveCustomFrames(frames: CustomFrame[]): void {
 }
 
 export function loadDharmaIdols(): DharmaIdol[] {
+  if (memoryDharma) return memoryDharma;
   if (typeof window === 'undefined') return DEFAULT_DHARMA_IDOLS;
   try {
     const raw = localStorage.getItem(DHARMA_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryDharma = parsed;
         return parsed;
       }
     }
   } catch {
     // fallback
   }
+  memoryDharma = DEFAULT_DHARMA_IDOLS;
   return DEFAULT_DHARMA_IDOLS;
 }
 
 export function saveDharmaIdols(idols: DharmaIdol[]): void {
+  memoryDharma = idols;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(DHARMA_KEY, JSON.stringify(idols));
@@ -358,22 +372,26 @@ export function saveDharmaIdols(idols: DharmaIdol[]): void {
 }
 
 export function loadCustomArtifacts(): CustomArtifact[] {
+  if (memoryArtifacts) return memoryArtifacts;
   if (typeof window === 'undefined') return DEFAULT_ARTIFACTS;
   try {
     const raw = localStorage.getItem(ARTIFACTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryArtifacts = parsed;
         return parsed;
       }
     }
   } catch {
     // fallback
   }
+  memoryArtifacts = DEFAULT_ARTIFACTS;
   return DEFAULT_ARTIFACTS;
 }
 
 export function saveCustomArtifacts(artifacts: CustomArtifact[]): void {
+  memoryArtifacts = artifacts;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(artifacts));
@@ -389,22 +407,26 @@ export function saveCustomArtifacts(artifacts: CustomArtifact[]): void {
 }
 
 export function loadCustomTitles(): CustomTitle[] {
+  if (memoryTitles) return memoryTitles;
   if (typeof window === 'undefined') return DEFAULT_CUSTOM_TITLES;
   try {
     const raw = localStorage.getItem(TITLES_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryTitles = parsed;
         return parsed;
       }
     }
   } catch {
     // fallback
   }
+  memoryTitles = DEFAULT_CUSTOM_TITLES;
   return DEFAULT_CUSTOM_TITLES;
 }
 
 export function saveCustomTitles(titles: CustomTitle[]): void {
+  memoryTitles = titles;
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
@@ -438,6 +460,7 @@ export async function syncItemsFromCloud(): Promise<boolean> {
       current.forEach((f) => map.set(f.id, f));
       data.customFrames.forEach((f: CustomFrame) => map.set(f.id, f));
       const merged = Array.from(map.values());
+      memoryFrames = merged;
       localStorage.setItem(FRAMES_KEY, JSON.stringify(merged));
     }
 
@@ -448,6 +471,7 @@ export async function syncItemsFromCloud(): Promise<boolean> {
       current.forEach((d) => map.set(d.id, d));
       data.dharmaIdols.forEach((d: DharmaIdol) => map.set(d.id, d));
       const merged = Array.from(map.values());
+      memoryDharma = merged;
       localStorage.setItem(DHARMA_KEY, JSON.stringify(merged));
     }
 
@@ -458,6 +482,7 @@ export async function syncItemsFromCloud(): Promise<boolean> {
       current.forEach((a) => map.set(a.id, a));
       data.customArtifacts.forEach((a: CustomArtifact) => map.set(a.id, a));
       const merged = Array.from(map.values());
+      memoryArtifacts = merged;
       localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(merged));
     }
 
@@ -468,6 +493,7 @@ export async function syncItemsFromCloud(): Promise<boolean> {
       current.forEach((t) => map.set(t.id, t));
       data.customTitles.forEach((t: CustomTitle) => map.set(t.id, t));
       const merged = Array.from(map.values());
+      memoryTitles = merged;
       localStorage.setItem(TITLES_KEY, JSON.stringify(merged));
     }
 
