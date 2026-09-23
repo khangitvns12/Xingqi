@@ -14,6 +14,7 @@ import BotMatchModal, { BotMatchConfig } from '../components/BotMatchModal';
 import ShopModal from '../components/ShopModal';
 import AdminModal from '../components/AdminModal';
 import LogoutModal from '../components/LogoutModal';
+import OnlineUsersModal from '../components/OnlineUsersModal';
 import { GamePlayer, GameRoom, Side } from '../lib/xiangqi/types';
 import {
   INITIAL_LOBBY_ROOMS,
@@ -48,6 +49,7 @@ export default function HomePage() {
   const [showProfile, setShowProfile] = useState(false);
   const [viewingProfileUser, setViewingProfileUser] = useState<UserAccount | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showOnlineUsers, setShowOnlineUsers] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const [showPatchNotes, setShowPatchNotes] = useState(false);
@@ -56,8 +58,8 @@ export default function HomePage() {
   const [showShop, setShowShop] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
-  // Online cultivators count (statically initialized to 24 to guarantee matching SSR & client initial render)
-  const [onlineCount, setOnlineCount] = useState<number>(24);
+  // Online cultivators count (statically initialized to 1 to guarantee matching SSR & client initial render)
+  const [onlineCount, setOnlineCount] = useState<number>(1);
 
   // Automatically sync all accounts, custom items, and settings from cloud database on startup
   useEffect(() => {
@@ -69,12 +71,12 @@ export default function HomePage() {
   // Keep online cultivators count updated in real-time
   useEffect(() => {
     const syncCount = () => {
-      setOnlineCount(getOnlineUsersCount());
+      setOnlineCount(getOnlineUsersCount(user));
     };
     syncCount();
     const timer = setInterval(syncCount, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [user]);
 
   // Force authentication on first visit if user has not logged in (user.isGuest)
   const isAuthModalOpen = showAuth || Boolean(user?.isGuest);
@@ -505,20 +507,30 @@ export default function HomePage() {
       (result.winnerSide === 'black' && activeRoom?.players.black?.id === user.id);
     const isDraw = result.winnerSide === 'draw';
 
-    const newWins = user.stats.wins + (isWin ? 1 : 0);
-    const newDraws = user.stats.draws + (isDraw ? 1 : 0);
-    const newLosses = user.stats.losses + (!isWin && !isDraw ? 1 : 0);
-    const newStreak = isWin ? user.stats.winStreak + 1 : 0;
-    const newMaxStreak = Math.max(user.stats.maxWinStreak, newStreak);
-    const newElo = Math.max(1000, user.elo + result.eloChange);
-    const newHighestElo = Math.max(user.stats.highestElo, newElo);
+    const currentStats = user.stats || {
+      totalMatches: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      winStreak: 0,
+      maxWinStreak: 0,
+      highestElo: user.elo || 1200,
+    };
+
+    const newWins = (currentStats.wins || 0) + (isWin ? 1 : 0);
+    const newDraws = (currentStats.draws || 0) + (isDraw ? 1 : 0);
+    const newLosses = (currentStats.losses || 0) + (!isWin && !isDraw ? 1 : 0);
+    const newStreak = isWin ? (currentStats.winStreak || 0) + 1 : 0;
+    const newMaxStreak = Math.max(currentStats.maxWinStreak || 0, newStreak);
+    const newElo = Math.max(1000, (user.elo || 1200) + result.eloChange);
+    const newHighestElo = Math.max(currentStats.highestElo || newElo, newElo);
 
     handleUpdateUser({
       elo: newElo,
-      exp: user.exp + result.expGained,
-      spiritStones: user.spiritStones + result.spiritStonesGained,
+      exp: (user.exp || 0) + result.expGained,
+      spiritStones: (user.spiritStones || 0) + result.spiritStonesGained,
       stats: {
-        totalMatches: user.stats.totalMatches + 1,
+        totalMatches: (currentStats.totalMatches || 0) + 1,
         wins: newWins,
         draws: newDraws,
         losses: newLosses,
@@ -547,6 +559,7 @@ export default function HomePage() {
         onReturnToLobby={() => setCurrentView('lobby')}
         inGame={currentView !== 'lobby'}
         onlineCount={onlineCount}
+        onOpenOnlineUsers={() => setShowOnlineUsers(true)}
       />
 
       {/* Main Content Area */}
@@ -569,6 +582,7 @@ export default function HomePage() {
             onOpenAdmin={() => setShowAdmin(true)}
             onOpenAuth={() => setShowAuth(true)}
             onLogout={handleOpenLogout}
+            onOpenOnlineUsers={() => setShowOnlineUsers(true)}
           />
         )}
 
@@ -625,6 +639,22 @@ export default function HomePage() {
           onViewProfile={(targetAcc) => {
             setShowLeaderboard(false);
             setViewingProfileUser(targetAcc);
+          }}
+        />
+      )}
+
+      {/* Online Cultivators Modal */}
+      {showOnlineUsers && (
+        <OnlineUsersModal
+          currentUser={user}
+          onClose={() => setShowOnlineUsers(false)}
+          onViewProfile={(targetAcc) => {
+            setShowOnlineUsers(false);
+            setViewingProfileUser(targetAcc);
+          }}
+          onChallengePlayer={(targetAcc) => {
+            setShowOnlineUsers(false);
+            handleStartDirectMatch(targetAcc);
           }}
         />
       )}

@@ -177,6 +177,82 @@ export function saveCustomTitles(titles: CustomTitle[]): void {
   }
 }
 
+export function deleteCustomFrame(frameId: string): CustomFrame[] {
+  const current = loadCustomFrames();
+  const updated = current.filter((f) => f.id !== frameId);
+  memoryFrames = updated;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(FRAMES_KEY, JSON.stringify(updated));
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_FRAME', id: frameId, frames: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
+}
+
+export function deleteDharmaIdol(dharmaId: string): DharmaIdol[] {
+  const current = loadDharmaIdols();
+  const updated = current.filter((d) => d.id !== dharmaId);
+  memoryDharma = updated;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(DHARMA_KEY, JSON.stringify(updated));
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_DHARMA', id: dharmaId, dharmaIdols: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
+}
+
+export function deleteCustomArtifact(artifactId: string): CustomArtifact[] {
+  const current = loadCustomArtifacts();
+  const updated = current.filter((a) => a.id !== artifactId);
+  memoryArtifacts = updated;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(updated));
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_ARTIFACT', id: artifactId, artifacts: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
+}
+
+export function deleteCustomTitle(titleId: string): CustomTitle[] {
+  const current = loadCustomTitles();
+  const updated = current.filter((t) => t.id !== titleId);
+  memoryTitles = updated;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(TITLES_KEY, JSON.stringify(updated));
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_TITLE', id: titleId, titles: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
+}
+
 /**
  * Fetch latest items from cloud server and merge into local storage.
  * Used when app mounts on any device (phone, laptop, tablet).

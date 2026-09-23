@@ -7,6 +7,8 @@ import {
   SEED_ACCOUNTS,
   SystemConfig,
   DEFAULT_SYSTEM_CONFIG,
+  sanitizeUserAccount,
+  BOT_USER_IDS,
 } from '../storage/userTypes';
 import {
   CustomFrame,
@@ -57,6 +59,9 @@ function getInitialStore(): CloudStoreData {
 
 export function loadServerCloudStore(): CloudStoreData {
   if (memoryStore) {
+    if (Array.isArray(memoryStore.accounts)) {
+      memoryStore.accounts = memoryStore.accounts.map(sanitizeUserAccount);
+    }
     return memoryStore;
   }
 
@@ -98,15 +103,30 @@ export function loadServerCloudStore(): CloudStoreData {
 }
 
 function ensureRequiredDefaults(store: CloudStoreData): void {
+  if (Array.isArray(store.accounts)) {
+    store.accounts = store.accounts
+      .map(sanitizeUserAccount)
+      .filter(
+        (a) =>
+          !BOT_USER_IDS.has(a.id) &&
+          !a.username.includes('kiem_ma') &&
+          !a.username.includes('bang_phach') &&
+          !a.username.includes('bach_van') &&
+          !a.username.includes('tu_tieu')
+      );
+  } else {
+    store.accounts = [...SEED_ACCOUNTS];
+  }
+
   // Ensure Admin and Default user exist ONLY if not already present
   const hasAdmin = store.accounts.some((a) => a.id === ADMIN_USER.id || a.username.toLowerCase() === ADMIN_USER.username.toLowerCase());
   if (!hasAdmin) {
-    store.accounts.unshift({ ...ADMIN_USER });
+    store.accounts.unshift(sanitizeUserAccount({ ...ADMIN_USER }));
   }
 
   const hasDefault = store.accounts.some((a) => a.id === DEFAULT_USER.id || a.username.toLowerCase() === DEFAULT_USER.username.toLowerCase());
   if (!hasDefault) {
-    store.accounts.push({ ...DEFAULT_USER });
+    store.accounts.push(sanitizeUserAccount({ ...DEFAULT_USER }));
   }
 
   // Ensure systemConfig exists
@@ -142,12 +162,12 @@ export function upsertAccountInServer(account: UserAccount): UserAccount {
     (a) => a.id === account.id || a.username.toLowerCase() === account.username.toLowerCase()
   );
 
-  const updatedAccount: UserAccount = {
+  const updatedAccount: UserAccount = sanitizeUserAccount({
     ...(index >= 0 ? store.accounts[index] : {}),
     ...account,
     updatedAt: account.updatedAt || Date.now(),
     lastActive: Date.now(),
-  };
+  });
 
   if (index >= 0) {
     store.accounts[index] = updatedAccount;
@@ -164,19 +184,20 @@ export function batchUpsertAccountsInServer(accounts: UserAccount[]): UserAccoun
   const map = new Map<string, UserAccount>();
 
   store.accounts.forEach((a) => {
-    map.set(a.id, a);
-    map.set(a.username.toLowerCase(), a);
+    const sanitized = sanitizeUserAccount(a);
+    map.set(sanitized.id, sanitized);
+    map.set(sanitized.username.toLowerCase(), sanitized);
   });
 
   accounts.forEach((acc) => {
     const existing = map.get(acc.id) || map.get(acc.username.toLowerCase());
-    const merged: UserAccount = {
+    const merged: UserAccount = sanitizeUserAccount({
       ...(existing || {}),
       ...acc,
       updatedAt: acc.updatedAt || Date.now(),
       lastActive: Date.now(),
-    };
-    map.set(acc.id, merged);
+    });
+    map.set(merged.id, merged);
   });
 
   // Unique list by id
@@ -256,6 +277,69 @@ export function upsertTitlesInServer(titles: CustomTitle[]): CustomTitle[] {
   });
 
   store.customTitles = Array.from(map.values());
+  saveServerCloudStore(store);
+  return store.customTitles;
+}
+
+export function deleteAccountInServer(accountId: string): UserAccount[] {
+  const store = loadServerCloudStore();
+  store.accounts = store.accounts.filter((a) => a.id !== accountId);
+  saveServerCloudStore(store);
+  return store.accounts;
+}
+
+export function deleteFrameInServer(frameId: string): CustomFrame[] {
+  const store = loadServerCloudStore();
+  store.customFrames = store.customFrames.filter((f) => f.id !== frameId);
+  saveServerCloudStore(store);
+  return store.customFrames;
+}
+
+export function replaceFramesInServer(frames: CustomFrame[]): CustomFrame[] {
+  const store = loadServerCloudStore();
+  store.customFrames = frames.map((f) => ({ ...f, updatedAt: Date.now() }));
+  saveServerCloudStore(store);
+  return store.customFrames;
+}
+
+export function deleteDharmaInServer(dharmaId: string): DharmaIdol[] {
+  const store = loadServerCloudStore();
+  store.dharmaIdols = store.dharmaIdols.filter((d) => d.id !== dharmaId);
+  saveServerCloudStore(store);
+  return store.dharmaIdols;
+}
+
+export function replaceDharmaInServer(dharmaIdols: DharmaIdol[]): DharmaIdol[] {
+  const store = loadServerCloudStore();
+  store.dharmaIdols = dharmaIdols.map((d) => ({ ...d, updatedAt: Date.now() }));
+  saveServerCloudStore(store);
+  return store.dharmaIdols;
+}
+
+export function deleteArtifactInServer(artifactId: string): CustomArtifact[] {
+  const store = loadServerCloudStore();
+  store.customArtifacts = store.customArtifacts.filter((a) => a.id !== artifactId);
+  saveServerCloudStore(store);
+  return store.customArtifacts;
+}
+
+export function replaceArtifactsInServer(artifacts: CustomArtifact[]): CustomArtifact[] {
+  const store = loadServerCloudStore();
+  store.customArtifacts = artifacts.map((a) => ({ ...a, updatedAt: Date.now() }));
+  saveServerCloudStore(store);
+  return store.customArtifacts;
+}
+
+export function deleteTitleInServer(titleId: string): CustomTitle[] {
+  const store = loadServerCloudStore();
+  store.customTitles = store.customTitles.filter((t) => t.id !== titleId);
+  saveServerCloudStore(store);
+  return store.customTitles;
+}
+
+export function replaceTitlesInServer(titles: CustomTitle[]): CustomTitle[] {
+  const store = loadServerCloudStore();
+  store.customTitles = titles.map((t) => ({ ...t, updatedAt: Date.now() }));
   saveServerCloudStore(store);
   return store.customTitles;
 }

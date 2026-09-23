@@ -29,6 +29,8 @@ import {
   ACCOUNTS_STORAGE_KEY,
   SYSTEM_CONFIG_KEY,
   KICKED_KEY,
+  sanitizeUserAccount,
+  BOT_USER_IDS,
 } from './userTypes';
 
 let memorySystemConfig: SystemConfig | null = null;
@@ -110,7 +112,7 @@ export function getUserSnapshot(): UserAccount {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw !== cachedUserRaw) {
       cachedUserRaw = raw;
-      cachedUser = raw ? JSON.parse(raw) : GUEST_USER;
+      cachedUser = raw ? sanitizeUserAccount(JSON.parse(raw)) : GUEST_USER;
     }
   } catch {
     return GUEST_USER;
@@ -122,25 +124,42 @@ export function getServerUserSnapshot(): UserAccount {
   return GUEST_USER;
 }
 
-export function getOnlineAccounts(): UserAccount[] {
+export function getOnlineAccounts(currentUser?: UserAccount): UserAccount[] {
   if (typeof window === 'undefined') return [];
   try {
     const accounts = loadAllAccounts();
-    return accounts.filter((a) => a.isOnline);
+    const now = Date.now();
+    const seen = new Set<string>();
+    const list: UserAccount[] = [];
+
+    accounts.forEach((acc) => {
+      if (acc.id === GUEST_USER.id) return;
+      if (BOT_USER_IDS.has(acc.id)) return;
+      if (seen.has(acc.id)) return;
+
+      const isCurrent = Boolean(currentUser && acc.id === currentUser.id);
+      const isRecentlyActive = Boolean(acc.lastActive && now - acc.lastActive < 20 * 60 * 1000);
+      const isOnline = Boolean(acc.isOnline) || isRecentlyActive || isCurrent;
+
+      if (isOnline) {
+        seen.add(acc.id);
+        list.push(acc);
+      }
+    });
+
+    return list;
   } catch {
     return [];
   }
 }
 
-export function getOnlineUsersCount(): number {
-  if (typeof window === 'undefined') return 18;
+export function getOnlineUsersCount(currentUser?: UserAccount): number {
+  if (typeof window === 'undefined') return 1;
   try {
-    const accounts = loadAllAccounts();
-    const onlineRegistered = accounts.filter((a) => a.isOnline).length;
-    // Active cultivators in realm (registered online + active daoist disciples)
-    return Math.max(15, onlineRegistered + 18);
+    const list = getOnlineAccounts(currentUser);
+    return Math.max(1, list.length);
   } catch {
-    return 18;
+    return 1;
   }
 }
 
@@ -225,7 +244,7 @@ export function loadUserProfile(): UserAccount {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      return JSON.parse(raw);
+      return sanitizeUserAccount(JSON.parse(raw));
     }
   } catch {
     // fallback
@@ -237,8 +256,9 @@ export function saveUserProfile(user: UserAccount): void {
   if (typeof window === 'undefined') return;
   try {
     const now = Date.now();
+    const sanitized = sanitizeUserAccount(user);
     const stampedUser: UserAccount = {
-      ...user,
+      ...sanitized,
       lastActive: now,
       updatedAt: now,
     };
@@ -279,32 +299,61 @@ export function saveUserProfile(user: UserAccount): void {
 let memoryAccounts: UserAccount[] | null = null;
 
 export function loadAllAccounts(): UserAccount[] {
-  if (memoryAccounts) return memoryAccounts;
-  if (typeof window === 'undefined') return SEED_ACCOUNTS;
+  if (memoryAccounts) {
+    return memoryAccounts
+      .map(sanitizeUserAccount)
+      .filter((a) => !BOT_USER_IDS.has(a.id) && !a.username.includes('kiem_ma') && !a.username.includes('bang_phach') && !a.username.includes('bach_van') && !a.username.includes('tu_tieu'));
+  }
+  if (typeof window === 'undefined') {
+    return SEED_ACCOUNTS.map(sanitizeUserAccount);
+  }
   try {
     const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
     if (raw) {
       const parsed: UserAccount[] = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        const sanitized = parsed
+          .map(sanitizeUserAccount)
+          .filter((a) => !BOT_USER_IDS.has(a.id) && !a.username.includes('kiem_ma') && !a.username.includes('bang_phach') && !a.username.includes('bach_van') && !a.username.includes('tu_tieu'));
         // Ensure admin account is present
-        const hasAdmin = parsed.some((a) => a.username === 'admin');
+        const hasAdmin = sanitized.some((a) => a.username === 'admin');
         if (!hasAdmin) {
-          parsed.unshift(ADMIN_USER);
-          localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(parsed));
+          sanitized.unshift(sanitizeUserAccount(ADMIN_USER));
         }
-        memoryAccounts = parsed;
-        return parsed;
+        memoryAccounts = sanitized;
+        localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(sanitized));
+        return sanitized;
       }
     }
     // First time init
-    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(SEED_ACCOUNTS));
-    memoryAccounts = SEED_ACCOUNTS;
-    return SEED_ACCOUNTS;
+    const initial = SEED_ACCOUNTS.map(sanitizeUserAccount);
+    localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(initial));
+    memoryAccounts = initial;
+    return initial;
   } catch {
     // fallback
   }
-  memoryAccounts = SEED_ACCOUNTS;
-  return SEED_ACCOUNTS;
+  memoryAccounts = SEED_ACCOUNTS.map(sanitizeUserAccount);
+  return memoryAccounts;
+}
+
+export function deleteAccount(userId: string): UserAccount[] {
+  const current = loadAllAccounts();
+  const updated = current.filter((a) => a.id !== userId);
+  memoryAccounts = updated;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(updated));
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DELETE_ACCOUNT', id: userId, accounts: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
 }
 
 export function saveAllAccounts(accounts: UserAccount[]): void {
@@ -342,7 +391,8 @@ export async function syncUserFromCloud(): Promise<boolean> {
     localAccounts.forEach((acc) => map.set(acc.id, acc));
 
     // Merge or overwrite with cloud accounts
-    data.accounts.forEach((serverAcc: UserAccount) => {
+    data.accounts.forEach((rawServerAcc: UserAccount) => {
+      const serverAcc = sanitizeUserAccount(rawServerAcc);
       const local = map.get(serverAcc.id);
       if (!local) {
         map.set(serverAcc.id, serverAcc);
@@ -361,7 +411,7 @@ export async function syncUserFromCloud(): Promise<boolean> {
         const primary = serverIsNewer ? serverAcc : local;
         const secondary = serverIsNewer ? local : serverAcc;
 
-        map.set(serverAcc.id, {
+        const mergedAccount = sanitizeUserAccount({
           ...secondary,
           ...primary,
           unlockedFrameIds: mergedUnlockedFrames,
@@ -388,6 +438,8 @@ export async function syncUserFromCloud(): Promise<boolean> {
           updatedAt: Math.max(serverTime, localTime),
           lastActive: Math.max(serverTime, localTime),
         });
+
+        map.set(serverAcc.id, mergedAccount);
       }
     });
 
@@ -656,160 +708,65 @@ export interface LeaderboardEntry {
 }
 
 export function generateLeaderboard(currentUser: UserAccount): LeaderboardEntry[] {
-  const registeredAccounts = loadAllAccounts().filter((a) => !a.isBanned);
+  const registeredAccounts = loadAllAccounts().filter(
+    (a) => !a.isBanned && !BOT_USER_IDS.has(a.id) && !a.username.includes('kiem_ma') && !a.username.includes('bang_phach') && !a.username.includes('bach_van') && !a.username.includes('tu_tieu')
+  );
 
-  const baseMasters: Omit<LeaderboardEntry, 'rank'>[] = [
-    {
-      id: 'master_1',
-      name: 'Cửu Thiên Tiên Đế',
-      title: 'Vô Thượng Tiên Đế',
-      sect: 'Hỗn Độn Tiên Cung',
-      realm: 'Vô Thượng Tiên Đế',
-      realmLevel: 10,
-      elo: 2890,
-      wins: 482,
-      winRate: 91,
-      avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 'master_2',
-      name: 'Hỗn Độn Kiếm Tôn',
-      title: 'Thiên Kiếp Kiếm Tôn',
-      sect: 'Vạn Kiếm Quy Tông',
-      realm: 'Độ Kiếp Kỳ',
-      realmLevel: 9,
-      elo: 2640,
-      wins: 395,
-      winRate: 86,
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 'master_3',
-      name: 'Bắc Minh Lão Tổ',
-      title: 'Bất Bại Thần Vương',
-      sect: 'Bắc Minh Hải Các',
-      realm: 'Đại Thừa Kỳ',
-      realmLevel: 8,
-      elo: 2430,
-      wins: 310,
-      winRate: 82,
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Thái Hư Đạo Nhân',
-      title: 'Lưỡng Nghi Tông Sư',
-      sect: 'Thái Hư Quán',
-      realm: 'Hợp Thể Kỳ',
-      realmLevel: 7,
-      elo: 2280,
-      wins: 254,
-      winRate: 79,
-      avatarUrl: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Độc Cô Kiếm Ma',
-      title: 'Thần Toán Chân Quân',
-      sect: 'Vạn Ma Thần Điện',
-      realm: 'Hóa Thần Kỳ',
-      realmLevel: 5,
-      elo: 2050,
-      wins: 198,
-      winRate: 76,
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Băng Phách Tiên Cơ',
-      title: 'Cửu Tiêu Kiếm Tiên',
-      sect: 'Hàn Băng Thần Cung',
-      realm: 'Nguyên Anh Kỳ',
-      realmLevel: 4,
-      elo: 1780,
-      wins: 142,
-      winRate: 74,
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Tử Tiêu Kiếm Tôn',
-      title: 'Diệu Thủ Đan Tâm',
-      sect: 'Thiên Đao Tông',
-      realm: 'Kim Đan Kỳ',
-      realmLevel: 3,
-      elo: 1580,
-      wins: 96,
-      winRate: 71,
-      avatarUrl: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Thanh Phong Trưởng Lão',
-      title: 'Bạch Vân Kỳ Sĩ',
-      sect: 'Thục Sơn Kiếm Phái',
-      realm: 'Trúc Cơ Kỳ',
-      realmLevel: 2,
-      elo: 1350,
-      wins: 68,
-      winRate: 67,
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      name: 'Bạch Vân Đạo Đồng',
-      title: 'Kỳ Đạo Đạo Đồng',
-      sect: 'Thanh Vân Tông',
-      realm: 'Luyện Khí Kỳ',
-      realmLevel: 1,
-      elo: 1120,
-      wins: 22,
-      winRate: 58,
-      avatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
-    },
-  ];
+  const safeCurrentUser = sanitizeUserAccount(currentUser);
+  const isGuest = safeCurrentUser.id === GUEST_USER.id || safeCurrentUser.isGuest;
 
-  // User entry
-  const userRealm = getRealmByLevel(currentUser.realmLevel);
-  const userTitle = DAOIST_TITLES.find((t) => t.id === currentUser.selectedTitleId)?.name || 'Kỳ Đạo Đạo Đồng';
-  const totalMatches = currentUser.stats.totalMatches || 1;
-  const userWinRate = Math.round((currentUser.stats.wins / totalMatches) * 100);
+  // Convert registered accounts into entries
+  const allEntries: Omit<LeaderboardEntry, 'rank'>[] = registeredAccounts.map((rawAcc) => {
+    const acc = sanitizeUserAccount(rawAcc);
+    const realm = getRealmByLevel(acc.realmLevel);
+    const title = DAOIST_TITLES.find((t) => t.id === acc.selectedTitleId)?.name || 'Kỳ Đạo Tu Sĩ';
+    const mCount = acc.stats?.totalMatches || 1;
+    const wins = acc.stats?.wins || 0;
+    const isCurrent = !isGuest && acc.id === safeCurrentUser.id;
 
-  const userEntry: Omit<LeaderboardEntry, 'rank'> = {
-    id: currentUser.id,
-    name: currentUser.daoName,
-    title: userTitle,
-    sect: currentUser.sect,
-    realm: userRealm.name,
-    realmLevel: currentUser.realmLevel,
-    elo: currentUser.elo,
-    wins: currentUser.stats.wins,
-    winRate: userWinRate,
-    avatarUrl: currentUser.avatarUrl,
-    isCurrentUser: true,
-    account: currentUser,
-  };
+    return {
+      id: acc.id,
+      name: acc.daoName,
+      title,
+      sect: acc.sect,
+      realm: realm.name,
+      realmLevel: acc.realmLevel,
+      elo: acc.elo,
+      wins,
+      winRate: Math.round((wins / mCount) * 100),
+      avatarUrl: acc.avatarUrl,
+      isCurrentUser: isCurrent,
+      account: acc,
+    };
+  });
 
-  // Convert other registered accounts into entries
-  const otherRegisteredEntries: Omit<LeaderboardEntry, 'rank'>[] = registeredAccounts
-    .filter((a) => a.id !== currentUser.id && a.id !== GUEST_USER.id)
-    .map((acc) => {
-      const realm = getRealmByLevel(acc.realmLevel);
-      const title = DAOIST_TITLES.find((t) => t.id === acc.selectedTitleId)?.name || 'Kỳ Đạo Tu Sĩ';
-      const mCount = acc.stats.totalMatches || 1;
-      return {
-        id: acc.id,
-        name: acc.daoName,
-        title,
-        sect: acc.sect,
-        realm: realm.name,
-        realmLevel: acc.realmLevel,
-        elo: acc.elo,
-        wins: acc.stats.wins,
-        winRate: Math.round((acc.stats.wins / mCount) * 100),
-        avatarUrl: acc.avatarUrl,
-        account: acc,
-      };
+  // If current logged-in user is not in registeredAccounts, add them
+  if (!isGuest && !allEntries.some((e) => e.id === safeCurrentUser.id)) {
+    const userRealm = getRealmByLevel(safeCurrentUser.realmLevel);
+    const userTitle = DAOIST_TITLES.find((t) => t.id === safeCurrentUser.selectedTitleId)?.name || 'Kỳ Đạo Đạo Đồng';
+    const totalMatches = safeCurrentUser.stats?.totalMatches || 1;
+    const userWins = safeCurrentUser.stats?.wins || 0;
+    const userWinRate = Math.round((userWins / totalMatches) * 100);
+
+    allEntries.push({
+      id: safeCurrentUser.id,
+      name: safeCurrentUser.daoName,
+      title: userTitle,
+      sect: safeCurrentUser.sect,
+      realm: userRealm.name,
+      realmLevel: safeCurrentUser.realmLevel,
+      elo: safeCurrentUser.elo,
+      wins: userWins,
+      winRate: userWinRate,
+      avatarUrl: safeCurrentUser.avatarUrl,
+      isCurrentUser: true,
+      account: safeCurrentUser,
     });
+  }
 
-  const all = [...baseMasters, ...otherRegisteredEntries, userEntry];
-  all.sort((a, b) => b.elo - a.elo);
+  allEntries.sort((a, b) => b.elo - a.elo);
 
-  return all.map((entry, index) => ({
+  return allEntries.map((entry, index) => ({
     ...entry,
     rank: index + 1,
   }));

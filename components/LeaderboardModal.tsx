@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Trophy, Medal, Crown, Sparkles, Filter, ShieldCheck, User } from 'lucide-react';
+import { Trophy, Crown, Medal, User } from 'lucide-react';
 import { generateLeaderboard, LeaderboardEntry, UserAccount } from '../lib/storage/userStore';
 
 interface LeaderboardModalProps {
@@ -11,7 +10,6 @@ interface LeaderboardModalProps {
 }
 
 export default function LeaderboardModal({ currentUser, onClose, onViewProfile }: LeaderboardModalProps) {
-  const [filterType, setFilterType] = useState<'all' | 'sect'>('all');
   const entries: LeaderboardEntry[] = generateLeaderboard(currentUser);
 
   const handleEntryClick = (entry: LeaderboardEntry) => {
@@ -73,7 +71,18 @@ export default function LeaderboardModal({ currentUser, onClose, onViewProfile }
 
         {/* Entries List */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-2 text-xs">
-          {entries.map((entry) => {
+          {entries.length === 0 ? (
+            <div className="text-center py-12 text-emerald-400/60 font-sans space-y-2">
+              <Trophy className="w-10 h-10 mx-auto text-emerald-600/50 mb-2" />
+              <p className="text-sm font-semibold text-emerald-300">
+                Chưa có đạo hữu nào đăng ký tham gia Phong Thần Bảng.
+              </p>
+              <p className="text-xs text-emerald-500/70">
+                Hãy tạo tài khoản hoặc thi đấu để ghi danh bảng vàng tiên giới!
+              </p>
+            </div>
+          ) : (
+            entries.map((entry) => {
             const isTop1 = entry.rank === 1;
             const isTop2 = entry.rank === 2;
             const isTop3 = entry.rank === 3;
@@ -144,7 +153,7 @@ export default function LeaderboardModal({ currentUser, onClose, onViewProfile }
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {/* Footer */}

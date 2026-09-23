@@ -1,5 +1,25 @@
 import { DAOIST_TITLES } from '../cultivation/realms';
 
+export interface UserStats {
+  totalMatches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winStreak: number;
+  maxWinStreak: number;
+  highestElo: number;
+}
+
+export const DEFAULT_USER_STATS: UserStats = {
+  totalMatches: 0,
+  wins: 0,
+  draws: 0,
+  losses: 0,
+  winStreak: 0,
+  maxWinStreak: 0,
+  highestElo: 1200,
+};
+
 export interface UserAccount {
   id: string;
   username: string;
@@ -29,15 +49,7 @@ export interface UserAccount {
   isOnline?: boolean;
   lastActive?: number;
   updatedAt?: number;
-  stats: {
-    totalMatches: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    winStreak: number;
-    maxWinStreak: number;
-    highestElo: number;
-  };
+  stats: UserStats;
   createdAt: number;
 }
 
@@ -192,112 +204,78 @@ export const GUEST_USER: UserAccount = {
   createdAt: 1700000000000,
 };
 
+export const BOT_USER_IDS = new Set([
+  'user_kiem_ma',
+  'user_bang_phach',
+  'user_bach_van',
+  'user_tu_tieu',
+  'user_test_persistence',
+]);
+
 export const SEED_ACCOUNTS: UserAccount[] = [
   ADMIN_USER,
   DEFAULT_USER,
-  {
-    id: 'user_kiem_ma',
-    username: 'kiem_ma_99',
-    role: 'user',
-    daoName: 'Độc Cô Kiếm Ma',
-    sect: 'Vạn Ma Thần Điện',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    elo: 2050,
-    realmLevel: 5,
-    exp: 720,
-    spiritStones: 3400,
-    pills: { 'Tụ Khí Đan': 10, 'Hàng Long Kim Đan': 4 },
-    selectedTitleId: 'title_5',
-    selectedAvatarId: 'av_5',
-    selectedFrameId: 'frame_purple_thunder',
-    selectedDharmaId: 'dharma_asura',
-    unlockedTitleIds: ['title_1', 'title_2', 'title_5'],
-    unlockedAvatarIds: ['av_1', 'av_5'],
-    unlockedFrameIds: ['frame_purple_thunder'],
-    unlockedDharmaIds: ['dharma_asura'],
-    isOnline: true,
-    lastActive: 1700000000000,
-    updatedAt: 1700000000000,
-    stats: { totalMatches: 198, wins: 152, draws: 10, losses: 36, winStreak: 5, maxWinStreak: 12, highestElo: 2110 },
-    createdAt: 1700000000000,
-  },
-  {
-    id: 'user_bang_phach',
-    username: 'bang_phach',
-    role: 'user',
-    daoName: 'Băng Phách Tiên Cơ',
-    sect: 'Hàn Băng Thần Cung',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    elo: 1780,
-    realmLevel: 4,
-    exp: 450,
-    spiritStones: 1950,
-    pills: { 'Tụ Khí Đan': 8, 'Trúc Cơ Đan': 5 },
-    selectedTitleId: 'title_4',
-    selectedAvatarId: 'av_4',
-    selectedFrameId: 'frame_ice_crystal',
-    selectedDharmaId: 'dharma_nine_tails',
-    unlockedTitleIds: ['title_1', 'title_4'],
-    unlockedAvatarIds: ['av_1', 'av_4'],
-    unlockedFrameIds: ['frame_ice_crystal'],
-    unlockedDharmaIds: ['dharma_nine_tails'],
-    isOnline: true,
-    lastActive: 1700000000000,
-    updatedAt: 1700000000000,
-    stats: { totalMatches: 142, wins: 105, draws: 8, losses: 29, winStreak: 4, maxWinStreak: 9, highestElo: 1820 },
-    createdAt: 1700000000000,
-  },
-  {
-    id: 'user_bach_van',
-    username: 'bach_van_dd',
-    role: 'user',
-    daoName: 'Bạch Vân Đạo Đồng',
-    sect: 'Thanh Vân Tông',
-    avatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
-    elo: 1120,
-    realmLevel: 1,
-    exp: 150,
-    spiritStones: 450,
-    pills: { 'Tụ Khí Đan': 2 },
-    selectedTitleId: 'title_1',
-    selectedAvatarId: 'av_1',
-    unlockedTitleIds: ['title_1'],
-    unlockedAvatarIds: ['av_1'],
-    unlockedFrameIds: [],
-    unlockedDharmaIds: [],
-    isOnline: true,
-    lastActive: 1700000000000,
-    updatedAt: 1700000000000,
-    stats: { totalMatches: 22, wins: 13, draws: 1, losses: 8, winStreak: 2, maxWinStreak: 3, highestElo: 1150 },
-    createdAt: 1700000000000,
-  },
-  {
-    id: 'user_tu_tieu',
-    username: 'tu_tieu_ton',
-    role: 'user',
-    daoName: 'Tử Tiêu Kiếm Tôn',
-    sect: 'Thiên Đao Tông',
-    avatarUrl: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&auto=format&fit=crop&q=80',
-    elo: 1580,
-    realmLevel: 3,
-    exp: 310,
-    spiritStones: 1200,
-    pills: { 'Trúc Cơ Đan': 3 },
-    selectedTitleId: 'title_3',
-    selectedAvatarId: 'av_3',
-    unlockedTitleIds: ['title_1', 'title_3'],
-    unlockedAvatarIds: ['av_1', 'av_3'],
-    unlockedFrameIds: [],
-    unlockedDharmaIds: [],
-    isOnline: false,
-    lastActive: 1700000000000,
-    updatedAt: 1700000000000,
-    stats: { totalMatches: 96, wins: 68, draws: 6, losses: 22, winStreak: 0, maxWinStreak: 7, highestElo: 1610 },
-    createdAt: 1700000000000,
-  },
 ];
 
 export const STORAGE_KEY = 'tien_ky_dao_user_v1';
 export const ACCOUNTS_STORAGE_KEY = 'tien_ky_dao_accounts_v1';
 export const SYSTEM_CONFIG_KEY = 'tien_ky_system_config_v1';
 export const KICKED_KEY = 'tien_ky_kicked_users_v1';
+
+export function sanitizeUserAccount(raw: any): UserAccount {
+  if (!raw || typeof raw !== 'object') {
+    return { ...DEFAULT_USER };
+  }
+  const rawStats = raw.stats || {};
+  const wins = Number(rawStats.wins) || 0;
+  const draws = Number(rawStats.draws) || 0;
+  const losses = Number(rawStats.losses) || 0;
+  const computedTotal =
+    typeof rawStats.totalMatches === 'number'
+      ? rawStats.totalMatches
+      : wins + draws + losses;
+  const elo = typeof raw.elo === 'number' ? raw.elo : 1200;
+
+  const stats: UserStats = {
+    totalMatches: computedTotal,
+    wins,
+    draws,
+    losses,
+    winStreak: Number(rawStats.winStreak) || 0,
+    maxWinStreak: Number(rawStats.maxWinStreak) || (Number(rawStats.winStreak) || 0),
+    highestElo: Math.max(Number(rawStats.highestElo) || elo, elo),
+  };
+
+  return {
+    id: raw.id || 'user_' + Date.now(),
+    username: raw.username || 'daohuuxian',
+    password: raw.password || '',
+    role: raw.role === 'admin' ? 'admin' : 'user',
+    isGuest: Boolean(raw.isGuest),
+    daoName: raw.daoName || 'Kỳ Hữu Vô Danh',
+    sect: raw.sect || 'Tán Tu Phàm Giới',
+    avatarUrl: raw.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    elo,
+    realmLevel: typeof raw.realmLevel === 'number' ? raw.realmLevel : 1,
+    exp: typeof raw.exp === 'number' ? raw.exp : 0,
+    spiritStones: typeof raw.spiritStones === 'number' ? raw.spiritStones : 200,
+    pills: raw.pills && typeof raw.pills === 'object' ? raw.pills : { 'Tụ Khí Đan': 3 },
+    selectedTitleId: raw.selectedTitleId || 'title_1',
+    selectedAvatarId: raw.selectedAvatarId || 'av_1',
+    selectedFrameId: raw.selectedFrameId || '',
+    unlockedFrameIds: Array.isArray(raw.unlockedFrameIds) ? raw.unlockedFrameIds : [],
+    selectedDharmaId: raw.selectedDharmaId || '',
+    unlockedDharmaIds: Array.isArray(raw.unlockedDharmaIds) ? raw.unlockedDharmaIds : [],
+    selectedArtifactId: raw.selectedArtifactId || '',
+    unlockedArtifactIds: Array.isArray(raw.unlockedArtifactIds) ? raw.unlockedArtifactIds : [],
+    unlockedTitleIds: Array.isArray(raw.unlockedTitleIds) ? raw.unlockedTitleIds : ['title_1'],
+    unlockedAvatarIds: Array.isArray(raw.unlockedAvatarIds) ? raw.unlockedAvatarIds : ['av_1'],
+    isBanned: Boolean(raw.isBanned),
+    banReason: raw.banReason || '',
+    isOnline: Boolean(raw.isOnline),
+    lastActive: raw.lastActive || Date.now(),
+    updatedAt: raw.updatedAt || Date.now(),
+    stats,
+    createdAt: raw.createdAt || Date.now(),
+  };
+}

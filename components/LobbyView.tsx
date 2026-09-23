@@ -51,6 +51,7 @@ interface LobbyViewProps {
   onOpenAdmin?: () => void;
   onOpenAuth?: () => void;
   onLogout?: () => void;
+  onOpenOnlineUsers?: () => void;
 }
 
 const INITIAL_MESSAGES: ChatMessage[] = [
@@ -110,6 +111,7 @@ export default function LobbyView({
   onOpenAdmin,
   onOpenAuth,
   onLogout,
+  onOpenOnlineUsers,
 }: LobbyViewProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
@@ -206,15 +208,21 @@ export default function LobbyView({
                 <Sparkles className="w-3.5 h-3.5 text-emerald-300 animate-spin" style={{ animationDuration: '8s' }} />
                 <span className="font-xianxia font-bold tracking-wide">Cửu Châu Tiên Kỳ Giới • Sảnh Chờ Luận Đạo</span>
               </div>
-              <div
+              <button
+                type="button"
                 id="lobby-online-badge"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#052420] border border-emerald-500/40 text-emerald-300 text-xs font-semibold shadow-sm"
+                onClick={onOpenOnlineUsers}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#052420] hover:bg-[#07362f] border border-emerald-500/40 hover:border-teal-400 text-emerald-300 text-xs font-semibold shadow-sm transition-all cursor-pointer group"
+                title="Nhấn để xem danh sách đạo hữu đang trực tuyến"
               >
                 <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_6px_#2dd4bf]" />
                 <span>
-                  Đang Trực Tuyến: <strong className="text-white font-mono">{onlineCount || 18}</strong> Đạo Hữu
+                  Đang Trực Tuyến: <strong className="text-white font-mono">{onlineCount || 1}</strong> Đạo Hữu
                 </span>
-              </div>
+                <span className="text-[10px] text-teal-300 underline underline-offset-2 opacity-80 group-hover:opacity-100">
+                  (Xem)
+                </span>
+              </button>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-xianxia text-white tracking-tight text-glow-jade">
               Thao Túng Thiên Bàn, <span className="bg-gradient-to-r from-emerald-200 via-teal-300 to-white bg-clip-text text-transparent">Chứng Đạo Tiên Kỳ</span>
@@ -361,21 +369,21 @@ export default function LobbyView({
               <div>
                 <span className="block text-emerald-400/60 font-medium">Thắng/Tổng</span>
                 <span className="font-bold text-white">
-                  {user.stats.wins}/{user.stats.totalMatches}
+                  {user.stats?.wins ?? 0}/{user.stats?.totalMatches ?? 0}
                 </span>
               </div>
               <div>
                 <span className="block text-emerald-400/60 font-medium">Tỷ Lệ Thắng</span>
                 <span className="font-bold text-teal-300">
-                  {user.stats.totalMatches > 0
-                    ? Math.round((user.stats.wins / user.stats.totalMatches) * 100)
+                  {(user.stats?.totalMatches ?? 0) > 0
+                    ? Math.round(((user.stats?.wins ?? 0) / user.stats.totalMatches) * 100)
                     : 0}
                   %
                 </span>
               </div>
               <div>
                 <span className="block text-emerald-400/60 font-medium">Liên Thắng</span>
-                <span className="font-bold text-emerald-300">🔥 {user.stats.winStreak}</span>
+                <span className="font-bold text-emerald-300">🔥 {user.stats?.winStreak ?? 0}</span>
               </div>
             </div>
 

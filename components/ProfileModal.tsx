@@ -1149,24 +1149,24 @@ export default function ProfileModal({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <span className="text-slate-500 text-[11px] block">Tổng Ván Đấu</span>
-                  <span className="text-lg font-bold text-slate-100">{user.stats.totalMatches}</span>
+                  <span className="text-lg font-bold text-slate-100">{user.stats?.totalMatches ?? 0}</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <span className="text-slate-500 text-[11px] block">Thắng Trận</span>
-                  <span className="text-lg font-bold text-emerald-400">{user.stats.wins}</span>
+                  <span className="text-lg font-bold text-emerald-400">{user.stats?.wins ?? 0}</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <span className="text-slate-500 text-[11px] block">Tỷ Lệ Thắng</span>
                   <span className="text-lg font-bold text-amber-400">
-                    {user.stats.totalMatches > 0
-                      ? Math.round((user.stats.wins / user.stats.totalMatches) * 100)
+                    {(user.stats?.totalMatches ?? 0) > 0
+                      ? Math.round(((user.stats?.wins ?? 0) / user.stats.totalMatches) * 100)
                       : 0}
                     %
                   </span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-center">
                   <span className="text-slate-500 text-[11px] block">Liên Thắng Tối Đa</span>
-                  <span className="text-lg font-bold text-rose-400">🔥 {user.stats.maxWinStreak}</span>
+                  <span className="text-lg font-bold text-rose-400">🔥 {user.stats?.maxWinStreak ?? 0}</span>
                 </div>
               </div>
 
@@ -1174,7 +1174,7 @@ export default function ProfileModal({
                 <h5 className="font-bold text-slate-200">Đạo Hạnh & Tài Phú:</h5>
                 <div className="flex items-center justify-between text-slate-300">
                   <span>ELO Cao Nhất Từng Đạt:</span>
-                  <span className="font-mono font-bold text-amber-400">{user.stats.highestElo} ELO</span>
+                  <span className="font-mono font-bold text-amber-400">{user.stats?.highestElo ?? user.elo ?? 1200} ELO</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-300">
                   <span>Linh Thạch Hiện Có:</span>

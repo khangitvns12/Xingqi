@@ -10,6 +10,7 @@ import {
   Award,
   RefreshCw,
   Settings,
+  Trash2,
 } from 'lucide-react';
 import {
   loadAllAccounts,
@@ -28,12 +29,16 @@ import {
   CustomTitle,
   loadCustomFrames,
   saveCustomFrames,
+  deleteCustomFrame,
   loadDharmaIdols,
   saveDharmaIdols,
+  deleteDharmaIdol,
   loadCustomArtifacts,
   saveCustomArtifacts,
+  deleteCustomArtifact,
   loadCustomTitles,
   saveCustomTitles,
+  deleteCustomTitle,
   syncItemsFromCloud,
 } from '../lib/cultivation/shopAndFrames';
 import AiFrameAlignModal from './AiFrameAlignModal';
@@ -71,6 +76,11 @@ export default function AdminModal({
   const [titleList, setTitleList] = useState<CustomTitle[]>(() => loadCustomTitles());
 
   const [showAiFrameModal, setShowAiFrameModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: 'user' | 'frame' | 'dharma' | 'artifact' | 'title';
+    id: string;
+    name: string;
+  } | null>(null);
 
   const reloadAllData = () => {
     setAccounts(loadAllAccounts());
@@ -146,11 +156,7 @@ export default function AdminModal({
   };
 
   const handleDeleteUser = (userId: string, daoName: string) => {
-    if (confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản [${daoName}]?`)) {
-      deleteUserByAdmin(userId);
-      refreshAccounts();
-      showFeedback(`Đã tiêu hủy tài khoản [${daoName}] khỏi thiên đạo!`, 'info');
-    }
+    setDeleteConfirm({ type: 'user', id: userId, name: daoName });
   };
 
   // --- FRAME ACTIONS ---
@@ -174,12 +180,7 @@ export default function AdminModal({
   };
 
   const handleDeleteFrame = (frameId: string, frameName: string) => {
-    if (confirm(`Xác nhận xóa khung viền [${frameName}]?`)) {
-      const updated = frames.filter((f) => f.id !== frameId);
-      setFrames(updated);
-      saveCustomFrames(updated);
-      showFeedback(`Đã xóa khung viền [${frameName}]!`, 'info');
-    }
+    setDeleteConfirm({ type: 'frame', id: frameId, name: frameName });
   };
 
   const handleAdminAiFrameSave = (savedFrame: CustomFrame) => {
@@ -211,12 +212,7 @@ export default function AdminModal({
   };
 
   const handleDeleteDharma = (id: string, name: string) => {
-    if (confirm(`Xác nhận xóa Pháp Tướng [${name}]?`)) {
-      const updated = dharmaList.filter((d) => d.id !== id);
-      setDharmaList(updated);
-      saveDharmaIdols(updated);
-      showFeedback(`Đã xóa Pháp Tướng [${name}]!`, 'info');
-    }
+    setDeleteConfirm({ type: 'dharma', id, name });
   };
 
   // --- ARTIFACT ACTIONS ---
@@ -240,12 +236,7 @@ export default function AdminModal({
   };
 
   const handleDeleteArtifact = (id: string, name: string) => {
-    if (confirm(`Xác nhận xóa Pháp Bảo [${name}]?`)) {
-      const updated = artifactList.filter((a) => a.id !== id);
-      setArtifactList(updated);
-      saveCustomArtifacts(updated);
-      showFeedback(`Đã xóa Pháp Bảo [${name}]!`, 'info');
-    }
+    setDeleteConfirm({ type: 'artifact', id, name });
   };
 
   // --- TITLE ACTIONS ---
@@ -269,12 +260,34 @@ export default function AdminModal({
   };
 
   const handleDeleteTitle = (id: string, name: string) => {
-    if (confirm(`Xác nhận xóa Danh Hiệu [${name}]?`)) {
-      const updated = titleList.filter((t) => t.id !== id);
+    setDeleteConfirm({ type: 'title', id, name });
+  };
+
+  const executeConfirmedDelete = () => {
+    if (!deleteConfirm) return;
+    const { type, id, name } = deleteConfirm;
+    if (type === 'user') {
+      deleteUserByAdmin(id);
+      refreshAccounts();
+      showFeedback(`Đã tiêu hủy tài khoản [${name}] khỏi thiên đạo!`, 'info');
+    } else if (type === 'frame') {
+      const updated = deleteCustomFrame(id);
+      setFrames(updated);
+      showFeedback(`Đã xóa vĩnh viễn khung viền [${name}]!`, 'info');
+    } else if (type === 'dharma') {
+      const updated = deleteDharmaIdol(id);
+      setDharmaList(updated);
+      showFeedback(`Đã xóa vĩnh viễn Pháp Tướng [${name}]!`, 'info');
+    } else if (type === 'artifact') {
+      const updated = deleteCustomArtifact(id);
+      setArtifactList(updated);
+      showFeedback(`Đã xóa vĩnh viễn Pháp Bảo [${name}]!`, 'info');
+    } else if (type === 'title') {
+      const updated = deleteCustomTitle(id);
       setTitleList(updated);
-      saveCustomTitles(updated);
-      showFeedback(`Đã xóa Danh Hiệu [${name}]!`, 'info');
+      showFeedback(`Đã xóa vĩnh viễn Danh Hiệu [${name}]!`, 'info');
     }
+    setDeleteConfirm(null);
   };
 
   return (
@@ -487,6 +500,42 @@ export default function AdminModal({
           onClose={() => setShowAiFrameModal(false)}
           onSaveFrame={handleAdminAiFrameSave}
         />
+      )}
+
+      {/* Confirmation Dialog for Deletion (Safe across iFrames) */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-[#072420] border-2 border-rose-500/50 rounded-2xl p-5 shadow-[0_0_40px_rgba(225,29,72,0.4)] text-emerald-100 font-xianxia space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-950/80 border border-rose-500/50 flex items-center justify-center text-rose-400">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-white text-rose-300">Xác Nhận Tiêu Huỷ</h4>
+                <p className="text-xs text-slate-300 font-sans">Hành động này sẽ xóa vĩnh viễn và không thể hoàn tác</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-200">
+              Đạo hữu có chắc chắn muốn xóa vĩnh viễn <strong className="text-amber-300 font-bold">[{deleteConfirm.name}]</strong> khỏi Tiên Giới?
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Huỷ Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={executeConfirmedDelete}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white text-xs font-bold shadow-lg shadow-rose-900/50 transition-all cursor-pointer"
+              >
+                Xác Nhận Xoá
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

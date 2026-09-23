@@ -7,6 +7,15 @@ import {
   upsertDharmaInServer,
   upsertArtifactsInServer,
   upsertTitlesInServer,
+  deleteAccountInServer,
+  deleteFrameInServer,
+  replaceFramesInServer,
+  deleteDharmaInServer,
+  replaceDharmaInServer,
+  deleteArtifactInServer,
+  replaceArtifactsInServer,
+  deleteTitleInServer,
+  replaceTitlesInServer,
   updateSystemConfigInServer,
   saveServerCloudStore,
 } from '../../../lib/server/cloudStore';
@@ -152,6 +161,133 @@ export async function POST(req: NextRequest) {
           success: true,
           message: 'Đã lưu trữ và mã hóa danh hiệu lên máy chủ',
           customTitles: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'DELETE_FRAME': {
+        const frameId = body.id || payload?.id;
+        if (!frameId) {
+          return NextResponse.json({ success: false, error: 'Thiếu frameId' }, { status: 400 });
+        }
+        const updated = deleteFrameInServer(frameId);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã xóa khung viền khỏi máy chủ',
+          customFrames: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'REPLACE_FRAMES': {
+        const framesToSave = frames || payload?.frames;
+        if (!Array.isArray(framesToSave)) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu khung không hợp lệ' }, { status: 400 });
+        }
+        const updated = replaceFramesInServer(framesToSave);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã cập nhật danh sách khung viền',
+          customFrames: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'DELETE_DHARMA': {
+        const dharmaId = body.id || payload?.id;
+        if (!dharmaId) {
+          return NextResponse.json({ success: false, error: 'Thiếu dharmaId' }, { status: 400 });
+        }
+        const updated = deleteDharmaInServer(dharmaId);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã xóa pháp tướng khỏi máy chủ',
+          dharmaIdols: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'REPLACE_DHARMA': {
+        const idolsToSave = dharmaIdols || payload?.dharmaIdols;
+        if (!Array.isArray(idolsToSave)) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu pháp tướng không hợp lệ' }, { status: 400 });
+        }
+        const updated = replaceDharmaInServer(idolsToSave);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã cập nhật danh sách pháp tướng',
+          dharmaIdols: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'DELETE_ARTIFACT': {
+        const artifactId = body.id || payload?.id;
+        if (!artifactId) {
+          return NextResponse.json({ success: false, error: 'Thiếu artifactId' }, { status: 400 });
+        }
+        const updated = deleteArtifactInServer(artifactId);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã xóa pháp bảo khỏi máy chủ',
+          customArtifacts: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'REPLACE_ARTIFACTS': {
+        const artifactsToSave = artifacts || payload?.artifacts;
+        if (!Array.isArray(artifactsToSave)) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu pháp bảo không hợp lệ' }, { status: 400 });
+        }
+        const updated = replaceArtifactsInServer(artifactsToSave);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã cập nhật danh sách pháp bảo',
+          customArtifacts: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'DELETE_TITLE': {
+        const titleId = body.id || payload?.id;
+        if (!titleId) {
+          return NextResponse.json({ success: false, error: 'Thiếu titleId' }, { status: 400 });
+        }
+        const updated = deleteTitleInServer(titleId);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã xóa danh hiệu khỏi máy chủ',
+          customTitles: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'REPLACE_TITLES': {
+        const titlesToSave = titles || payload?.titles;
+        if (!Array.isArray(titlesToSave)) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu danh hiệu không hợp lệ' }, { status: 400 });
+        }
+        const updated = replaceTitlesInServer(titlesToSave);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã cập nhật danh sách danh hiệu',
+          customTitles: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'DELETE_USER':
+      case 'DELETE_ACCOUNT': {
+        const accountId = body.id || body.userId || payload?.id || payload?.userId;
+        if (!accountId) {
+          return NextResponse.json({ success: false, error: 'Thiếu accountId' }, { status: 400 });
+        }
+        const updated = deleteAccountInServer(accountId);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã xóa tài khoản vĩnh viễn khỏi hệ thống',
+          accounts: updated,
           lastUpdated: Date.now(),
         });
       }
