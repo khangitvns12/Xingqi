@@ -1,6 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { UserAccount, ADMIN_USER, DEFAULT_USER, SEED_ACCOUNTS } from '../storage/userStore';
+import {
+  UserAccount,
+  ADMIN_USER,
+  DEFAULT_USER,
+  SEED_ACCOUNTS,
+  SystemConfig,
+  DEFAULT_SYSTEM_CONFIG,
+} from '../storage/userStore';
 import {
   CustomFrame,
   DharmaIdol,
@@ -11,6 +18,7 @@ import {
   DEFAULT_ARTIFACTS,
   DEFAULT_CUSTOM_TITLES,
 } from '../cultivation/shopAndFrames';
+import { readEncryptedFile, writeEncryptedFile } from './encryptedDb';
 
 export interface CloudStoreData {
   accounts: UserAccount[];
@@ -18,12 +26,17 @@ export interface CloudStoreData {
   dharmaIdols: DharmaIdol[];
   customArtifacts: CustomArtifact[];
   customTitles: CustomTitle[];
+  systemConfig: SystemConfig;
   lastUpdated: number;
   version: string;
+  isEncrypted?: boolean;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const DATA_FILE = path.join(DATA_DIR, 'cloud_store.json');
+// Primary encrypted database file
+const ENCRYPTED_DB_FILE = path.join(DATA_DIR, 'cloud_store.db.enc');
+// Legacy unencrypted path for smooth migration
+const LEGACY_DATA_FILE = path.join(DATA_DIR, 'cloud_store.json');
 
 // In-memory cache for ultra-fast access
 let memoryStore: CloudStoreData | null = null;
@@ -35,8 +48,10 @@ function getInitialStore(): CloudStoreData {
     dharmaIdols: [...DEFAULT_DHARMA_IDOLS],
     customArtifacts: [...DEFAULT_ARTIFACTS],
     customTitles: [...DEFAULT_CUSTOM_TITLES],
+    systemConfig: { ...DEFAULT_SYSTEM_CONFIG },
     lastUpdated: Date.now(),
-    version: '1.3.1',
+    version: '1.4.0',
+    isEncrypted: true,
   };
 }
 
@@ -46,23 +61,36 @@ export function loadServerCloudStore(): CloudStoreData {
   }
 
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf-8');
+    // 1. Try reading encrypted database first
+    if (fs.existsSync(ENCRYPTED_DB_FILE)) {
+      const decrypted = readEncryptedFile<CloudStoreData>(ENCRYPTED_DB_FILE);
+      if (decrypted && Array.isArray(decrypted.accounts)) {
+        ensureRequiredDefaults(decrypted);
+        memoryStore = decrypted;
+        return memoryStore;
+      }
+    }
+
+    // 2. Migration: If legacy plain JSON exists, read, migrate, and save encrypted!
+    if (fs.existsSync(LEGACY_DATA_FILE)) {
+      const content = fs.readFileSync(LEGACY_DATA_FILE, 'utf-8');
       const parsed = JSON.parse(content) as CloudStoreData;
       if (parsed && Array.isArray(parsed.accounts)) {
-        // Ensure Admin and Default user exist
-        const hasAdmin = parsed.accounts.some((a) => a.id === ADMIN_USER.id || a.username === ADMIN_USER.username);
-        if (!hasAdmin) parsed.accounts.unshift(ADMIN_USER);
-
-        const hasDefault = parsed.accounts.some((a) => a.id === DEFAULT_USER.id || a.username === DEFAULT_USER.username);
-        if (!hasDefault) parsed.accounts.push(DEFAULT_USER);
-
+        ensureRequiredDefaults(parsed);
         memoryStore = parsed;
+        // Save to encrypted db immediately
+        saveServerCloudStore(memoryStore);
+        try {
+          // Backup legacy file as .bak
+          fs.renameSync(LEGACY_DATA_FILE, `${LEGACY_DATA_FILE}.migrated.bak`);
+        } catch {
+          // ignore
+        }
         return memoryStore;
       }
     }
   } catch (err) {
-    console.error('[CloudStore] Error reading store from disk:', err);
+    console.error('[CloudStore] Error reading encrypted store from disk:', err);
   }
 
   memoryStore = getInitialStore();
@@ -70,19 +98,37 @@ export function loadServerCloudStore(): CloudStoreData {
   return memoryStore;
 }
 
+function ensureRequiredDefaults(store: CloudStoreData): void {
+  // Ensure Admin and Default user exist
+  const hasAdmin = store.accounts.some((a) => a.id === ADMIN_USER.id || a.username === ADMIN_USER.username);
+  if (!hasAdmin) store.accounts.unshift(ADMIN_USER);
+
+  const hasDefault = store.accounts.some((a) => a.id === DEFAULT_USER.id || a.username === DEFAULT_USER.username);
+  if (!hasDefault) store.accounts.push(DEFAULT_USER);
+
+  // Ensure systemConfig exists
+  if (!store.systemConfig || typeof store.systemConfig.defaultElo !== 'number') {
+    store.systemConfig = { ...DEFAULT_SYSTEM_CONFIG };
+  }
+
+  if (!Array.isArray(store.customFrames)) store.customFrames = [...DEFAULT_FRAMES];
+  if (!Array.isArray(store.dharmaIdols)) store.dharmaIdols = [...DEFAULT_DHARMA_IDOLS];
+  if (!Array.isArray(store.customArtifacts)) store.customArtifacts = [...DEFAULT_ARTIFACTS];
+  if (!Array.isArray(store.customTitles)) store.customTitles = [...DEFAULT_CUSTOM_TITLES];
+}
+
 export function saveServerCloudStore(data: CloudStoreData): void {
   memoryStore = {
     ...data,
+    isEncrypted: true,
     lastUpdated: Date.now(),
   };
 
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(memoryStore, null, 2), 'utf-8');
+    // Write AES-256-GCM encrypted database file
+    writeEncryptedFile(ENCRYPTED_DB_FILE, memoryStore);
   } catch (err) {
-    console.error('[CloudStore] Error writing store to disk:', err);
+    console.error('[CloudStore] Error writing encrypted store to disk:', err);
   }
 }
 
@@ -94,7 +140,6 @@ export function upsertAccountInServer(account: UserAccount): UserAccount {
   );
 
   if (index >= 0) {
-    // Merge existing account preserving stats if newer
     store.accounts[index] = {
       ...store.accounts[index],
       ...account,
@@ -113,7 +158,6 @@ export function upsertAccountInServer(account: UserAccount): UserAccount {
 
 export function upsertFramesInServer(frames: CustomFrame[]): CustomFrame[] {
   const store = loadServerCloudStore();
-  // Merge frames by ID
   const map = new Map<string, CustomFrame>();
   store.customFrames.forEach((f) => map.set(f.id, f));
   frames.forEach((f) => map.set(f.id, f));
@@ -154,4 +198,15 @@ export function upsertTitlesInServer(titles: CustomTitle[]): CustomTitle[] {
   store.customTitles = Array.from(map.values());
   saveServerCloudStore(store);
   return store.customTitles;
+}
+
+export function updateSystemConfigInServer(config: Partial<SystemConfig>): SystemConfig {
+  const store = loadServerCloudStore();
+  store.systemConfig = {
+    ...store.systemConfig,
+    ...config,
+    lastUpdated: Date.now(),
+  };
+  saveServerCloudStore(store);
+  return store.systemConfig;
 }

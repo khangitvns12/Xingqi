@@ -9,6 +9,7 @@ import {
   Gem,
   Award,
   RefreshCw,
+  Settings,
 } from 'lucide-react';
 import {
   loadAllAccounts,
@@ -41,6 +42,7 @@ import AdminFramesTab from './admin/AdminFramesTab';
 import AdminDharmaTab from './admin/AdminDharmaTab';
 import AdminArtifactsTab from './admin/AdminArtifactsTab';
 import AdminTitlesTab from './admin/AdminTitlesTab';
+import AdminSystemConfigTab from './admin/AdminSystemConfigTab';
 
 function generateCustomId(prefix: string): string {
   return `${prefix}_custom_${Date.now()}`;
@@ -57,7 +59,7 @@ export default function AdminModal({
   onClose,
   onAccountUpdated,
 }: AdminModalProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'frames' | 'dharma' | 'artifacts' | 'titles'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'frames' | 'dharma' | 'artifacts' | 'titles' | 'system'>('users');
   const [isSyncingCloud, setIsSyncingCloud] = useState(false);
   const [adminNotice, setAdminNotice] = useState<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
 
@@ -399,6 +401,18 @@ export default function AdminModal({
             <Award className="w-4 h-4" />
             <span>Danh Hiệu Ảnh ({titleList.length})</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('system')}
+            className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'system'
+                ? 'border-emerald-400 text-emerald-300 font-bold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Settings className="w-4 h-4" />
+            <span>Cấu Hình Khởi Tạo & Database Mã Hóa</span>
+          </button>
         </div>
 
         {/* Tab Body */}
@@ -449,6 +463,18 @@ export default function AdminModal({
               onCreateTitle={handleCreateTitle}
               onToggleShop={handleToggleTitleShop}
               onDeleteTitle={handleDeleteTitle}
+            />
+          )}
+
+          {activeTab === 'system' && (
+            <AdminSystemConfigTab
+              accounts={accounts}
+              frames={frames}
+              dharmaList={dharmaList}
+              artifactList={artifactList}
+              titleList={titleList}
+              onConfigSaved={(msg) => showFeedback(msg, 'success')}
+              onFullDataReload={reloadAllData}
             />
           )}
         </div>

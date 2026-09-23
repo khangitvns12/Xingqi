@@ -16,7 +16,7 @@ import {
   KeyRound,
   UserCheck,
 } from 'lucide-react';
-import { loadAllAccounts, UserAccount, syncUserFromCloud } from '../lib/storage/userStore';
+import { loadAllAccounts, UserAccount, syncUserFromCloud, loadSystemConfig } from '../lib/storage/userStore';
 import { syncItemsFromCloud } from '../lib/cultivation/shopAndFrames';
 
 interface AuthModalProps {
@@ -109,25 +109,35 @@ export default function AuthModal({
         return;
       }
 
+      const sysConfig = loadSystemConfig();
+      const unlockedFrames = sysConfig.defaultFrameId ? [sysConfig.defaultFrameId] : [];
+      const unlockedDharma = sysConfig.defaultDharmaId ? [sysConfig.defaultDharmaId] : [];
+      const unlockedArtifacts = sysConfig.defaultArtifactId ? [sysConfig.defaultArtifactId] : [];
+      const unlockedTitles = Array.from(new Set(['title_1', sysConfig.defaultTitleId || 'title_1']));
+      const unlockedAvatars = Array.from(new Set(['av_1', sysConfig.defaultAvatarId || 'av_1']));
+
       const newAccount: UserAccount = {
         id: 'user_' + Date.now(),
         username: username.trim(),
         password: password.trim(),
         daoName: daoName.trim(),
         sect: sect.trim() || 'Tán Tu Tiên Giới',
-        avatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
-        elo: 1200,
-        realmLevel: 1,
+        avatarUrl: sysConfig.defaultAvatarUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
+        elo: sysConfig.defaultElo || 1200,
+        realmLevel: sysConfig.defaultRealmLevel || 1,
         exp: 0,
-        spiritStones: 200,
-        pills: { 'Tụ Khí Đan': 3 },
-        selectedTitleId: 'title_1',
-        selectedAvatarId: 'av_1',
-        unlockedTitleIds: ['title_1'],
-        unlockedAvatarIds: ['av_1'],
-        unlockedFrameIds: [],
-        unlockedDharmaIds: [],
-        unlockedArtifactIds: [],
+        spiritStones: sysConfig.defaultSpiritStones ?? 200,
+        pills: sysConfig.defaultPills || { 'Tụ Khí Đan': 3 },
+        selectedTitleId: sysConfig.defaultTitleId || 'title_1',
+        selectedAvatarId: sysConfig.defaultAvatarId || 'av_1',
+        selectedFrameId: sysConfig.defaultFrameId || undefined,
+        selectedDharmaId: sysConfig.defaultDharmaId || undefined,
+        selectedArtifactId: sysConfig.defaultArtifactId || undefined,
+        unlockedTitleIds: unlockedTitles,
+        unlockedAvatarIds: unlockedAvatars,
+        unlockedFrameIds: unlockedFrames,
+        unlockedDharmaIds: unlockedDharma,
+        unlockedArtifactIds: unlockedArtifacts,
         stats: {
           totalMatches: 0,
           wins: 0,
@@ -135,7 +145,7 @@ export default function AuthModal({
           losses: 0,
           winStreak: 0,
           maxWinStreak: 0,
-          highestElo: 1200,
+          highestElo: sysConfig.defaultElo || 1200,
         },
         createdAt: Date.now(),
       };

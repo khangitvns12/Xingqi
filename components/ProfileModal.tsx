@@ -17,6 +17,8 @@ import {
   Wand2,
   Gem,
   RefreshCw,
+  Camera,
+  Upload,
 } from 'lucide-react';
 import {
   CULTIVATION_REALMS,
@@ -41,6 +43,7 @@ import {
 import { soundManager } from '../lib/audio/soundFx';
 import AvatarWithFrame from './AvatarWithFrame';
 import AiFrameAlignModal from './AiFrameAlignModal';
+import { AvatarCropModal } from './AvatarCropModal';
 
 interface ProfileModalProps {
   user: UserAccount;
@@ -67,6 +70,7 @@ export default function ProfileModal({
   const [tempSect, setTempSect] = useState(user.sect);
   const [breakthroughMsg, setBreakthroughMsg] = useState<{ type: 'success' | 'fail'; text: string } | null>(null);
   const [showAiAlignModal, setShowAiAlignModal] = useState(false);
+  const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [allFrames, setAllFrames] = useState<CustomFrame[]>(() => loadCustomFrames());
@@ -212,13 +216,24 @@ export default function ProfileModal({
           <div className="flex items-start justify-between relative z-10">
             <div className="flex items-center gap-4">
               {/* Centerpiece: Glowing Cultivation Frame Avatar with Custom Frame */}
-              <AvatarWithFrame
-                avatarUrl={user.avatarUrl}
-                daoName={user.daoName}
-                realmLevel={user.realmLevel}
-                frameId={user.selectedFrameId}
-                size="lg"
-              />
+              <div className="relative group">
+                <AvatarWithFrame
+                  avatarUrl={user.avatarUrl}
+                  daoName={user.daoName}
+                  realmLevel={user.realmLevel}
+                  frameId={user.selectedFrameId}
+                  size="lg"
+                />
+                {!isReadOnly && (
+                  <button
+                    onClick={() => setShowAvatarCropModal(true)}
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg border border-emerald-300/60 transition-transform active:scale-90"
+                    title="Tải lên & cắt tròn avatar"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
 
               <div>
                 <div className="flex items-center gap-2">
@@ -1051,8 +1066,39 @@ export default function ProfileModal({
 
           {/* TAB 3: PHÁP TƯỚNG (AVATAR) */}
           {activeTab === 'avatars' && (
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-400">Chọn pháp tướng phù hợp với cảnh giới tu vi của bạn.</p>
+            <div className="space-y-4 text-xs">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <p className="text-slate-400">Chọn pháp tướng phù hợp với cảnh giới hoặc tải lên ảnh đại diện riêng.</p>
+                {!isReadOnly && (
+                  <button
+                    onClick={() => setShowAvatarCropModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950 flex items-center gap-1.5 shrink-0 transition-transform active:scale-95"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Tải Lên & Cắt Avatar</span>
+                  </button>
+                )}
+              </div>
+
+              {!isReadOnly && (
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/70 via-teal-950/40 to-slate-950 border border-emerald-500/30 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                      <Camera className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-xs">Avatar Tùy Chỉnh Tiên Hiệp</h4>
+                      <p className="text-[11px] text-emerald-300/80">Kéo thả, phóng to thu nhỏ hoặc tự động cắt tròn khớp khung tuyệt đối</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAvatarCropModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-white text-xs font-semibold shrink-0"
+                  >
+                    Đổi Ngay
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {CULTIVATOR_AVATARS.map((av) => {
@@ -1182,6 +1228,22 @@ export default function ProfileModal({
           user={user}
           onClose={() => setShowAiAlignModal(false)}
           onSaveFrame={handleSaveNewFrame}
+        />
+      )}
+
+      {/* Interactive Avatar Crop & Upload Modal */}
+      {showAvatarCropModal && (
+        <AvatarCropModal
+          currentAvatarUrl={user.avatarUrl}
+          daoName={user.daoName}
+          realmLevel={user.realmLevel}
+          currentFrameId={user.selectedFrameId}
+          availableFrames={allFrames}
+          onSave={(croppedUrl) => {
+            onUpdateUser({ avatarUrl: croppedUrl });
+            setShowAvatarCropModal(false);
+          }}
+          onClose={() => setShowAvatarCropModal(false)}
         />
       )}
     </div>

@@ -44,6 +44,85 @@ export interface UserAccount {
   createdAt: number;
 }
 
+export interface SystemConfig {
+  id: string; // 'system_config'
+  defaultAvatarUrl: string;
+  defaultAvatarId: string;
+  defaultFrameId?: string;
+  defaultDharmaId?: string;
+  defaultArtifactId?: string;
+  defaultTitleId: string;
+  defaultSpiritStones: number;
+  defaultElo: number;
+  defaultRealmLevel: number;
+  defaultPills: Record<string, number>;
+  lastUpdated: number;
+}
+
+export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
+  id: 'system_config',
+  defaultAvatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
+  defaultAvatarId: 'av_1',
+  defaultFrameId: '',
+  defaultDharmaId: '',
+  defaultArtifactId: '',
+  defaultTitleId: 'title_1',
+  defaultSpiritStones: 200,
+  defaultElo: 1200,
+  defaultRealmLevel: 1,
+  defaultPills: { 'Tụ Khí Đan': 3 },
+  lastUpdated: Date.now(),
+};
+
+const SYSTEM_CONFIG_KEY = 'tien_ky_system_config_v1';
+let memorySystemConfig: SystemConfig | null = null;
+
+export function loadSystemConfig(): SystemConfig {
+  if (memorySystemConfig) return memorySystemConfig;
+  if (typeof window === 'undefined') return DEFAULT_SYSTEM_CONFIG;
+  try {
+    const raw = localStorage.getItem(SYSTEM_CONFIG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.defaultElo === 'number') {
+        const conf: SystemConfig = { ...DEFAULT_SYSTEM_CONFIG, ...parsed };
+        memorySystemConfig = conf;
+        return conf;
+      }
+    }
+  } catch {
+    // fallback
+  }
+  memorySystemConfig = DEFAULT_SYSTEM_CONFIG;
+  return DEFAULT_SYSTEM_CONFIG;
+}
+
+export function saveSystemConfig(config: Partial<SystemConfig>): SystemConfig {
+  const current = loadSystemConfig();
+  const updated: SystemConfig = {
+    ...current,
+    ...config,
+    id: 'system_config',
+    lastUpdated: Date.now(),
+  };
+  memorySystemConfig = updated;
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(updated));
+      // Asynchronously push to server encrypted DB
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'SYNC_SYSTEM_CONFIG', systemConfig: updated }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  return updated;
+}
+
 export const ADMIN_USER: UserAccount = {
   id: 'user_admin',
   username: 'admin',
@@ -570,6 +649,11 @@ export async function syncUserFromCloud(): Promise<boolean> {
         cachedUser = matched;
         notifyUserChange();
       }
+    }
+
+    if (data.systemConfig && typeof data.systemConfig.defaultElo === 'number') {
+      memorySystemConfig = { ...DEFAULT_SYSTEM_CONFIG, ...data.systemConfig };
+      localStorage.setItem(SYSTEM_CONFIG_KEY, JSON.stringify(memorySystemConfig));
     }
 
     return true;

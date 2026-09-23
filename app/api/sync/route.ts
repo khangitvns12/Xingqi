@@ -6,8 +6,10 @@ import {
   upsertDharmaInServer,
   upsertArtifactsInServer,
   upsertTitlesInServer,
+  updateSystemConfigInServer,
   saveServerCloudStore,
 } from '../../../lib/server/cloudStore';
+import { encryptData, decryptData, EncryptedPayload } from '../../../lib/server/encryptedDb';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
         dharmaIdols: store.dharmaIdols,
         customArtifacts: store.customArtifacts,
         customTitles: store.customTitles,
+        systemConfig: store.systemConfig,
         lastUpdated: store.lastUpdated,
       });
     }
@@ -40,6 +43,7 @@ export async function GET(req: NextRequest) {
         dharmaIdols: store.dharmaIdols,
         customArtifacts: store.customArtifacts,
         customTitles: store.customTitles,
+        systemConfig: store.systemConfig,
         lastUpdated: store.lastUpdated,
       });
     }
@@ -52,8 +56,10 @@ export async function GET(req: NextRequest) {
       dharmaIdols: store.dharmaIdols,
       customArtifacts: store.customArtifacts,
       customTitles: store.customTitles,
+      systemConfig: store.systemConfig,
       lastUpdated: store.lastUpdated,
       version: store.version,
+      isEncrypted: true,
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Lỗi đồng bộ máy chủ';
@@ -64,7 +70,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, payload, account, frames, dharmaIdols, artifacts, titles } = body;
+    const {
+      action,
+      payload,
+      account,
+      frames,
+      dharmaIdols,
+      artifacts,
+      titles,
+      systemConfig,
+      encryptedPayload,
+    } = body;
 
     const store = loadServerCloudStore();
 
@@ -77,7 +93,7 @@ export async function POST(req: NextRequest) {
         const updated = upsertAccountInServer(accToSave);
         return NextResponse.json({
           success: true,
-          message: 'Đã đồng bộ tài khoản lên Tiên Giới Đám Mây',
+          message: 'Đã đồng bộ tài khoản lên Tiên Giới Đám Mây (Mã hóa an toàn)',
           account: updated,
           lastUpdated: Date.now(),
         });
@@ -86,40 +102,40 @@ export async function POST(req: NextRequest) {
       case 'SYNC_FRAMES': {
         const framesToSave = frames || payload?.frames;
         if (!Array.isArray(framesToSave)) {
-          return NextResponse.json({ success: false, error: 'Dữ liệu khung viền không hợp lệ' }, { status: 400 });
+          return NextResponse.json({ success: false, error: 'Dữ liệu khung không hợp lệ' }, { status: 400 });
         }
-        const updatedFrames = upsertFramesInServer(framesToSave);
+        const updated = upsertFramesInServer(framesToSave);
         return NextResponse.json({
           success: true,
-          message: 'Đã đồng bộ khung viền lên máy chủ',
-          customFrames: updatedFrames,
+          message: 'Đã lưu trữ và mã hóa khung avatar lên máy chủ',
+          customFrames: updated,
           lastUpdated: Date.now(),
         });
       }
 
       case 'SYNC_DHARMA': {
-        const dharmaToSave = dharmaIdols || payload?.dharmaIdols;
-        if (!Array.isArray(dharmaToSave)) {
+        const idolsToSave = dharmaIdols || payload?.dharmaIdols;
+        if (!Array.isArray(idolsToSave)) {
           return NextResponse.json({ success: false, error: 'Dữ liệu pháp tướng không hợp lệ' }, { status: 400 });
         }
-        const updated = upsertDharmaInServer(dharmaToSave);
+        const updated = upsertDharmaInServer(idolsToSave);
         return NextResponse.json({
           success: true,
-          message: 'Đã đồng bộ pháp tướng lên máy chủ',
+          message: 'Đã lưu trữ và mã hóa pháp tướng lên máy chủ',
           dharmaIdols: updated,
           lastUpdated: Date.now(),
         });
       }
 
       case 'SYNC_ARTIFACTS': {
-        const artsToSave = artifacts || payload?.artifacts;
-        if (!Array.isArray(artsToSave)) {
+        const artifactsToSave = artifacts || payload?.artifacts;
+        if (!Array.isArray(artifactsToSave)) {
           return NextResponse.json({ success: false, error: 'Dữ liệu pháp bảo không hợp lệ' }, { status: 400 });
         }
-        const updated = upsertArtifactsInServer(artsToSave);
+        const updated = upsertArtifactsInServer(artifactsToSave);
         return NextResponse.json({
           success: true,
-          message: 'Đã đồng bộ pháp bảo lên máy chủ',
+          message: 'Đã lưu trữ và mã hóa pháp bảo lên máy chủ',
           customArtifacts: updated,
           lastUpdated: Date.now(),
         });
@@ -133,14 +149,53 @@ export async function POST(req: NextRequest) {
         const updated = upsertTitlesInServer(titlesToSave);
         return NextResponse.json({
           success: true,
-          message: 'Đã đồng bộ danh hiệu lên máy chủ',
+          message: 'Đã lưu trữ và mã hóa danh hiệu lên máy chủ',
           customTitles: updated,
           lastUpdated: Date.now(),
         });
       }
 
+      case 'SYNC_SYSTEM_CONFIG': {
+        const configToSave = systemConfig || payload?.systemConfig;
+        if (!configToSave) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu cấu hình hệ thống không hợp lệ' }, { status: 400 });
+        }
+        const updated = updateSystemConfigInServer(configToSave);
+        return NextResponse.json({
+          success: true,
+          message: 'Đã lưu cấu hình khởi tạo tài khoản vào Database mã hóa',
+          systemConfig: updated,
+          lastUpdated: Date.now(),
+        });
+      }
+
+      case 'EXPORT_ENCRYPTED_DB': {
+        const currentStore = loadServerCloudStore();
+        const encrypted = encryptData(currentStore);
+        return NextResponse.json({
+          success: true,
+          encryptedBackup: encrypted,
+          timestamp: Date.now(),
+        });
+      }
+
+      case 'RESTORE_ENCRYPTED_DB': {
+        if (!encryptedPayload) {
+          return NextResponse.json({ success: false, error: 'Thiếu gói tin mã hóa khôi phục' }, { status: 400 });
+        }
+        const restoredData = decryptData<any>(encryptedPayload as EncryptedPayload);
+        if (!restoredData || !Array.isArray(restoredData.accounts)) {
+          return NextResponse.json({ success: false, error: 'Dữ liệu giải mã không hợp lệ' }, { status: 400 });
+        }
+        saveServerCloudStore(restoredData);
+        return NextResponse.json({
+          success: true,
+          message: 'Khôi phục cơ sở dữ liệu mã hóa thành công',
+          data: restoredData,
+        });
+      }
+
       case 'FULL_MERGE': {
-        // Bulk client sync to server
         if (payload?.account) {
           upsertAccountInServer(payload.account);
         }
@@ -155,6 +210,9 @@ export async function POST(req: NextRequest) {
         }
         if (Array.isArray(payload?.titles)) {
           upsertTitlesInServer(payload.titles);
+        }
+        if (payload?.systemConfig) {
+          updateSystemConfigInServer(payload.systemConfig);
         }
         if (Array.isArray(payload?.accounts)) {
           payload.accounts.forEach((acc: any) => upsertAccountInServer(acc));
