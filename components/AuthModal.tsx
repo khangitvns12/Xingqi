@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import {
   LogIn,
   LogOut,
@@ -46,28 +46,34 @@ export default function AuthModal({
   const [successMsg, setSuccessMsg] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [cloudSynced, setCloudSynced] = useState(false);
-  const [accounts, setAccounts] = useState<UserAccount[]>(() => loadAllAccounts());
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const [accounts, setAccounts] = useState<UserAccount[]>([]);
 
   // Auto-fetch latest accounts and items from server cloud when opening modal
   useEffect(() => {
-    let mounted = true;
+    let active = true;
     const fetchCloud = async () => {
+      setAccounts(loadAllAccounts());
       setIsSyncing(true);
       try {
         await Promise.all([syncUserFromCloud(), syncItemsFromCloud()]);
-        if (mounted) {
+        if (active) {
           setAccounts(loadAllAccounts());
           setCloudSynced(true);
         }
       } catch (e) {
         console.warn('Sync error in AuthModal:', e);
       } finally {
-        if (mounted) setIsSyncing(false);
+        if (active) setIsSyncing(false);
       }
     };
     fetchCloud();
     return () => {
-      mounted = false;
+      active = false;
     };
   }, []);
 
@@ -377,7 +383,7 @@ export default function AuthModal({
           </div>
         )}
 
-        {!isRegister && accounts.filter((a) => !a.isGuest && !BOT_USER_IDS.has(a.id)).length > 0 && (
+        {!isRegister && isMounted && accounts.filter((a) => !a.isGuest && !BOT_USER_IDS.has(a.id)).length > 0 && (
           <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-1.5">
             <div className="text-[11px] text-emerald-300/80 font-bold flex items-center justify-between">
               <span>Đạo Tịch Đã Lưu Trên Máy Chủ:</span>
