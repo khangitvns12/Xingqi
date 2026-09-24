@@ -1,6 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // Fallback alignment when API key is not configured or in case of transient errors
 function generateFallbackAlignment(errorReason?: string) {
   return {

@@ -17,6 +17,8 @@ import {
 } from '@/lib/server/multiplayerStore';
 import { loadServerCloudStore, upsertAccountInServer } from '@/lib/server/cloudStore';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action') || 'lobby_sync';
