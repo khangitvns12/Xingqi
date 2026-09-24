@@ -32,6 +32,9 @@ interface LobbyViewProps {
   user: UserAccount;
   rooms: GameRoom[];
   onlineCount?: number;
+  chatMessages?: ChatMessage[];
+  onSendChatMessage?: (text: string) => void;
+  onlineAccountsList?: UserAccount[];
   onStartMatchmaking: () => void;
   onCreateRoom: (options: {
     name: string;
@@ -98,6 +101,9 @@ export default function LobbyView({
   user,
   rooms,
   onlineCount,
+  chatMessages,
+  onSendChatMessage,
+  onlineAccountsList,
   onStartMatchmaking,
   onCreateRoom,
   onJoinRoom,
@@ -116,22 +122,28 @@ export default function LobbyView({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [mobileLobbyTab, setMobileLobbyTab] = useState<'rooms' | 'community'>('rooms');
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+
+  const activeMessages = (chatMessages && chatMessages.length > 0) ? chatMessages : localMessages;
 
   // Active online accounts
-  const [onlineAccounts, setOnlineAccounts] = useState<UserAccount[]>(() =>
+  const [polledAccounts, setPolledAccounts] = useState<UserAccount[]>(() =>
     SEED_ACCOUNTS.filter((a) => a.isOnline && a.id !== user.id && !a.isBanned)
   );
 
   useEffect(() => {
+    if (onlineAccountsList && onlineAccountsList.length > 0) return;
     const syncOnline = () => {
       const all = loadAllAccounts();
-      setOnlineAccounts(all.filter((a) => a.isOnline && a.id !== user.id && !a.isBanned));
+      setPolledAccounts(all.filter((a) => a.isOnline && a.id !== user.id && !a.isBanned));
     };
-    syncOnline();
     const interval = setInterval(syncOnline, 4000);
     return () => clearInterval(interval);
-  }, [user.id]);
+  }, [user.id, onlineAccountsList]);
+
+  const onlineAccounts = (onlineAccountsList && onlineAccountsList.length > 0)
+    ? onlineAccountsList.filter((a) => a.id !== user.id && !a.isBanned)
+    : polledAccounts;
 
   const handleInspectCultivator = (target: UserAccount) => {
     if (onViewUserProfile) {
@@ -179,6 +191,9 @@ export default function LobbyView({
   const activeTitle = DAOIST_TITLES.find((t) => t.id === user.selectedTitleId)?.name || 'Kỳ Đạo Đạo Đồng';
 
   const handleSendChatMessage = (text: string) => {
+    if (onSendChatMessage) {
+      onSendChatMessage(text);
+    }
     const newMsg: ChatMessage = {
       id: 'msg_' + Date.now(),
       sender: user.daoName,
@@ -188,7 +203,7 @@ export default function LobbyView({
       message: text,
       time: 'Vừa xong',
     };
-    setMessages((prev) => [...prev, newMsg]);
+    setLocalMessages((prev) => [...prev, newMsg]);
   };
 
   return (
@@ -454,7 +469,7 @@ export default function LobbyView({
 
           {/* World Chat & Online Cultivators Box */}
           <LobbyWorldChat
-            messages={messages}
+            messages={activeMessages}
             onSendMessage={handleSendChatMessage}
             onlineAccounts={onlineAccounts}
             onlineCount={onlineCount}

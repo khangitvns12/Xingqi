@@ -203,6 +203,12 @@ export function logoutUser(): UserAccount {
       }
     }
 
+    try {
+      document.cookie = 'tkd_uid=; path=/; max-age=0; SameSite=Lax';
+    } catch {
+      // ignore
+    }
+
     const raw = JSON.stringify(GUEST_USER);
     localStorage.setItem(STORAGE_KEY, raw);
     cachedUserRaw = raw;
@@ -283,11 +289,25 @@ export function saveUserProfile(user: UserAccount): void {
       memoryAccounts = accounts;
       localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
 
+      // Persist long-lived browser session cookie so cache clearance never wipes identity
+      try {
+        document.cookie = `tkd_uid=${encodeURIComponent(stampedUser.id)}; path=/; max-age=31536000; SameSite=Lax`;
+      } catch {
+        // ignore
+      }
+
       // Asynchronously sync active account to cloud server
       fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'SYNC_ACCOUNT', account: updatedAccount }),
+      }).catch(() => {});
+
+      // Heartbeat to multiplayer runtime
+      fetch('/api/multiplayer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'HEARTBEAT', user: updatedAccount, status: 'lobby' }),
       }).catch(() => {});
     }
     notifyUserChange();
@@ -552,8 +572,7 @@ export function deleteUserByAdmin(userId: string): boolean {
   const target = accounts.find((a) => a.id === userId);
   if (!target || target.role === 'admin' || target.username === 'admin') return false;
 
-  const remaining = accounts.filter((a) => a.id !== userId);
-  saveAllAccounts(remaining);
+  deleteAccount(userId);
   return true;
 }
 

@@ -32,6 +32,15 @@ import { syncItemsFromCloud } from '../lib/cultivation/shopAndFrames';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import { soundManager } from '../lib/audio/soundFx';
 import { AiCultivator } from '../lib/xiangqi/ai';
+import {
+  syncLobbyData,
+  sendWorldChat,
+  createRoomOnServer,
+  joinRoomOnServer,
+  getSessionAccount,
+} from '../lib/multiplayer/multiplayerClient';
+import { ChatMessage } from '../lib/server/multiplayerStore';
+import { BOT_USER_IDS } from '../lib/storage/userTypes';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export default function HomePage() {
@@ -44,6 +53,10 @@ export default function HomePage() {
   // Rooms
   const [rooms, setRooms] = useState<GameRoom[]>(INITIAL_LOBBY_ROOMS);
   const [activeRoom, setActiveRoom] = useState<GameRoom | null>(null);
+
+  // Live Multiplayer Data
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [onlineUsersList, setOnlineUsersList] = useState<UserAccount[]>([]);
 
   // Modals
   const [showProfile, setShowProfile] = useState(false);
@@ -66,17 +79,50 @@ export default function HomePage() {
     Promise.all([syncUserFromCloud(), syncItemsFromCloud()]).catch((err) => {
       console.warn('[Sync] Initial cloud sync warning:', err);
     });
+
+    // Auto-restore session if user identity cookie exists
+    getSessionAccount().then((sessionAcc) => {
+      if (sessionAcc && (user.isGuest || user.id === 'user_main')) {
+        setUser(sessionAcc);
+      }
+    }).catch(() => {});
   }, []);
 
-  // Keep online cultivators count updated in real-time
+  // Real-time multiplayer lobby sync (rooms, online users, world chat)
   useEffect(() => {
-    const syncCount = () => {
-      setOnlineCount(getOnlineUsersCount(user));
+    let isMounted = true;
+    const pollLobby = async () => {
+      try {
+        const res = await syncLobbyData(user);
+        if (isMounted && res) {
+          if (Array.isArray(res.rooms)) {
+            const serverRoomIds = new Set(res.rooms.map((r) => r.id));
+            const baseRooms = INITIAL_LOBBY_ROOMS.filter((r) => !serverRoomIds.has(r.id));
+            setRooms([...res.rooms, ...baseRooms]);
+          }
+          if (Array.isArray(res.onlineUsers)) {
+            setOnlineUsersList(res.onlineUsers);
+            setOnlineCount(Math.max(1, res.onlineUsers.length));
+          }
+          if (Array.isArray(res.chatMessages) && res.chatMessages.length > 0) {
+            setChatMessages(res.chatMessages);
+          }
+          if (res.sessionAccount && user.isGuest) {
+            setUser(res.sessionAccount);
+          }
+        }
+      } catch {
+        // network issue fallback
+      }
     };
-    syncCount();
-    const timer = setInterval(syncCount, 4000);
-    return () => clearInterval(timer);
-  }, [user]);
+
+    pollLobby();
+    const timer = setInterval(pollLobby, 2500);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, [user.id, user.isGuest, setUser]);
 
   // Force authentication on first visit if user has not logged in (user.isGuest)
   const isAuthModalOpen = showAuth || Boolean(user?.isGuest);
@@ -112,10 +158,11 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [user, logout, currentView]);
 
-  // Direct challenge from public profile viewing
+  // Direct challenge from public profile viewing or online cultivators list
   const handleStartDirectMatch = (target: UserAccount) => {
+    const isTargetBot = BOT_USER_IDS.has(target.id) || target.id.startsWith('ai_');
     const newRoom: GameRoom = {
-      id: 'room_duel_' + Date.now(),
+      id: 'room_duel_' + Date.now().toString().slice(-4),
       name: `Luận Đạo: ${user.daoName} vs ${target.daoName}`,
       hostId: user.id,
       hostName: user.daoName,
@@ -150,8 +197,8 @@ export default function HomePage() {
           frameColor: '#38bdf8',
           side: 'black',
           timeLeft: 10 * 60,
-          isAi: true,
-          aiDifficultyLevel: Math.min(6, Math.max(1, Math.ceil(target.realmLevel / 2))),
+          isAi: isTargetBot,
+          aiDifficultyLevel: isTargetBot ? Math.min(6, Math.max(1, Math.ceil(target.realmLevel / 2))) : undefined,
         },
       },
       spectatorCount: 1,
@@ -163,6 +210,7 @@ export default function HomePage() {
       type: 'success',
       message: `Đã mở ván cờ luận đạo trực tiếp với ${target.daoName}!`,
     });
+    createRoomOnServer(newRoom).catch(() => {});
   };
 
   // Handle Logout flow
@@ -281,6 +329,7 @@ export default function HomePage() {
           frameColor: userRealm.glowColor,
           side: 'red',
           timeLeft: options.timeLimit * 60,
+          isAi: false,
         },
       },
       spectatorCount: 1,
@@ -290,6 +339,8 @@ export default function HomePage() {
     setRooms((prev) => [newRoom, ...prev]);
     setActiveRoom(newRoom);
     setCurrentView('waiting');
+
+    createRoomOnServer(newRoom).catch(() => {});
   };
 
   // Join existing room
@@ -303,28 +354,33 @@ export default function HomePage() {
       return;
     }
 
+    const joiningPlayer: GamePlayer = {
+      id: user.id,
+      name: user.daoName,
+      title: 'Đạo Hữu Khiêu Chiến',
+      realm: userRealm.name,
+      realmLevel: user.realmLevel,
+      elo: user.elo,
+      avatarUrl: user.avatarUrl,
+      frameColor: userRealm.glowColor,
+      side: room.players.red ? 'black' : 'red',
+      timeLeft: room.timeLimit * 60,
+      isAi: false,
+    };
+
     // Join waiting room as black if empty
     const updatedRoom: GameRoom = {
       ...room,
       players: {
         ...room.players,
-        black: room.players.black || {
-          id: user.id,
-          name: user.daoName,
-          title: 'Đạo Hữu Khiêu Chiến',
-          realm: userRealm.name,
-          realmLevel: user.realmLevel,
-          elo: user.elo,
-          avatarUrl: user.avatarUrl,
-          frameColor: userRealm.glowColor,
-          side: 'black',
-          timeLeft: room.timeLimit * 60,
-        },
+        [joiningPlayer.side]: room.players[joiningPlayer.side] || joiningPlayer,
       },
     };
 
     setActiveRoom(updatedRoom);
     setCurrentView('waiting');
+
+    joinRoomOnServer(room.id, joiningPlayer).catch(() => {});
   };
 
   // Direct AI Challenge from Lobby
@@ -569,6 +625,11 @@ export default function HomePage() {
             user={user}
             rooms={rooms}
             onlineCount={onlineCount}
+            chatMessages={chatMessages}
+            onlineAccountsList={onlineUsersList}
+            onSendChatMessage={(text) => {
+              sendWorldChat(user, text).catch(() => {});
+            }}
             onStartMatchmaking={handleStartMatchmaking}
             onCreateRoom={handleCreateRoom}
             onJoinRoom={handleJoinRoom}

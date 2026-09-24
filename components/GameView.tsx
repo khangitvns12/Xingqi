@@ -59,6 +59,12 @@ import { evaluateAdvantage, findBestMove, getHintMove } from '../lib/xiangqi/ai'
 import { soundManager } from '../lib/audio/soundFx';
 import { UserAccount } from '../lib/storage/userStore';
 import { getRealmByLevel } from '../lib/cultivation/realms';
+import {
+  submitMoveToServer,
+  syncRoomState,
+  resignGameOnServer,
+  offerDrawOnServer,
+} from '../lib/multiplayer/multiplayerClient';
 import JadeChessboard from './JadeChessboard';
 import AvatarWithFrame from './AvatarWithFrame';
 
@@ -363,6 +369,21 @@ export default function GameView({
     if (isSideInCheck(newBoard, nextSide)) {
       soundManager.playCheckAlert();
     }
+
+    // If online match against human player, synchronize move with server
+    if (!opponentPlayer.isAi && room.id) {
+      submitMoveToServer(room.id, {
+        from,
+        to,
+        piece: movingPiece,
+        notation,
+        side: movingPiece.side,
+        redTime: movingPiece.side === 'red' ? redTime + room.increment : redTime,
+        blackTime: movingPiece.side === 'black' ? blackTime + room.increment : blackTime,
+        captured: targetPiece,
+        skillFx: skillType,
+      }).catch((e) => console.warn('Submit move error:', e));
+    }
   };
 
   // Timer countdown hook (paused if unlimited timeLimit === 0)
@@ -436,6 +457,80 @@ export default function GameView({
     }
   }, [currentTurn, gameOver, opponentPlayer, isCurrentAi, board, mySide]);
 
+  // Real-time polling for multiplayer online room moves
+  const lastServerVersionRef = useRef<number>(1);
+
+  useEffect(() => {
+    if (opponentPlayer.isAi || gameOver || !room.id) return;
+
+    let isMounted = true;
+    const pollTimer = setInterval(async () => {
+      try {
+        const state = await syncRoomState(room.id);
+        if (!isMounted || !state) return;
+
+        // Check if game ended on server
+        if (state.gameOver && !gameOver) {
+          setGameOver(true);
+          setWinner(state.winner || 'draw');
+          setGameOverReason(state.gameOverReason || 'Ván đấu đã kết thúc');
+          return;
+        }
+
+        // Check if opponent made a new move
+        if (state.version > lastServerVersionRef.current) {
+          lastServerVersionRef.current = state.version;
+
+          if (state.currentTurn === mySide && state.moveHistory.length > 0) {
+            const oppMove = state.moveHistory[state.moveHistory.length - 1];
+
+            setBoard(state.board);
+            setCurrentTurn(state.currentTurn);
+            setMoveHistory(state.moveHistory);
+            setLastMove({ from: oppMove.from, to: oppMove.to });
+            if (typeof state.redTime === 'number') setRedTime(state.redTime);
+            if (typeof state.blackTime === 'number') setBlackTime(state.blackTime);
+
+            if (oppMove.captured) {
+              const skill = oppMove.skillFx || getSkillTypeForPiece(oppMove.piece.type);
+              soundManager.playCapture(skill);
+              setActiveSkillFx({
+                id: 'fx_' + Date.now(),
+                type: skill,
+                row: oppMove.to.r,
+                col: oppMove.to.c,
+                attackerSide: oppMove.piece.side,
+                skillName: getSkillNameVi(skill),
+              });
+              setBoardShake(true);
+              setTimeout(() => setBoardShake(false), 400);
+              setTimeout(() => setActiveSkillFx(null), 1400);
+
+              if (oppMove.piece.side === 'red') {
+                setCapturedRed((prev) => [...prev, oppMove.captured!]);
+              } else {
+                setCapturedBlack((prev) => [...prev, oppMove.captured!]);
+              }
+            } else {
+              soundManager.playPieceMove();
+            }
+
+            if (isSideInCheck(state.board, mySide)) {
+              soundManager.playCheckAlert();
+            }
+          }
+        }
+      } catch {
+        // ignore network error
+      }
+    }, 850);
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollTimer);
+    };
+  }, [opponentPlayer.isAi, gameOver, room.id, mySide]);
+
   // User board cell click
   const handleCellClick = (r: number, c: number) => {
     if (gameOver) return;
@@ -480,6 +575,9 @@ export default function GameView({
     if (gameOver) return;
     const oppSide: Side = mySide === 'red' ? 'black' : 'red';
     handleGameFinish(oppSide, 'Bạn đã nhận thua (Quy hàng luận đạo)');
+    if (!opponentPlayer.isAi && room.id) {
+      resignGameOnServer(room.id, mySide).catch(() => {});
+    }
   };
 
   // Offer draw
@@ -489,6 +587,9 @@ export default function GameView({
     if (opponentPlayer.isAi) {
       handleGameFinish('draw', 'Hai bên bắt tay hòa hoãn, dĩ hòa vi quý');
     } else {
+      if (room.id) {
+        offerDrawOnServer(room.id, mySide).catch(() => {});
+      }
       handleGameFinish('draw', 'Hai bên đồng ý thủ hòa');
     }
   };

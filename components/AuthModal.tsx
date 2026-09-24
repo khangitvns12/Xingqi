@@ -17,6 +17,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { loadAllAccounts, UserAccount, syncUserFromCloud, loadSystemConfig } from '../lib/storage/userStore';
+import { BOT_USER_IDS } from '../lib/storage/userTypes';
 import { syncItemsFromCloud } from '../lib/cultivation/shopAndFrames';
 
 interface AuthModalProps {
@@ -171,6 +172,16 @@ export default function AuthModal({
       }
 
       onRegisterAccount(newAccount);
+      try {
+        document.cookie = `tkd_uid=${encodeURIComponent(newAccount.id)}; path=/; max-age=31536000; SameSite=Lax`;
+        fetch('/api/multiplayer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'SET_SESSION', userId: newAccount.id }),
+        }).catch(() => {});
+      } catch {
+        // ignore
+      }
       setSuccessMsg('Chúc mừng đạo hữu nhập môn Tiên Kỳ Các thành công!');
       setTimeout(() => {
         onClose();
@@ -236,6 +247,16 @@ export default function AuthModal({
       const freshUser = refreshedAccounts.find((a) => a.id === found!.id || a.username.toLowerCase() === found!.username.toLowerCase()) || found;
 
       onSwitchAccount(freshUser);
+      try {
+        document.cookie = `tkd_uid=${encodeURIComponent(freshUser.id)}; path=/; max-age=31536000; SameSite=Lax`;
+        fetch('/api/multiplayer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'SET_SESSION', userId: freshUser.id }),
+        }).catch(() => {});
+      } catch {
+        // ignore
+      }
       setSuccessMsg(`Đăng nhập thành công! Hoan nghênh ${freshUser.daoName} ngự giá Tiên Giới.`);
       setTimeout(() => {
         onClose();
@@ -353,6 +374,40 @@ export default function AuthModal({
           <div className="p-2.5 rounded-xl bg-emerald-950/90 border border-emerald-400/60 text-emerald-200 text-xs flex items-center gap-1.5 shadow-lg">
             <Check className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{successMsg}</span>
+          </div>
+        )}
+
+        {!isRegister && accounts.filter((a) => !a.isGuest && !BOT_USER_IDS.has(a.id)).length > 0 && (
+          <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 space-y-1.5">
+            <div className="text-[11px] text-emerald-300/80 font-bold flex items-center justify-between">
+              <span>Đạo Tịch Đã Lưu Trên Máy Chủ:</span>
+              <span className="text-[10px] text-teal-400 font-normal">Bấm để chọn nhanh</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+              {accounts
+                .filter((a) => !a.isGuest && !BOT_USER_IDS.has(a.id))
+                .map((acc) => (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => {
+                      setUsername(acc.username);
+                      if (acc.password) {
+                        setPassword(acc.password);
+                      }
+                    }}
+                    className={`px-2 py-1 rounded-lg border text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                      username.toLowerCase() === acc.username.toLowerCase()
+                        ? 'bg-emerald-500/20 border-teal-400 text-teal-200 font-bold shadow-[0_0_8px_rgba(45,212,191,0.2)]'
+                        : 'bg-[#021310] border-emerald-500/30 text-emerald-300/80 hover:bg-emerald-900/40 hover:text-white'
+                    }`}
+                  >
+                    <UserCheck className="w-3 h-3 text-teal-400" />
+                    <span>{acc.daoName}</span>
+                    <span className="text-[9px] text-emerald-400/60 font-mono">({acc.username})</span>
+                  </button>
+                ))}
+            </div>
           </div>
         )}
 

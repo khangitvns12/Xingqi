@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Swords, ArrowLeftRight, Play, UserPlus, Bot, Shield, Clock, Copy, Check, ArrowLeft, MessageSquare, Send } from 'lucide-react';
 import { GamePlayer, GameRoom, Side } from '../lib/xiangqi/types';
 import { UserAccount } from '../lib/storage/userStore';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import { AI_CULTIVATOR_RIVALS } from '../lib/xiangqi/ai';
+import { syncRoomState, startRoomOnServer } from '../lib/multiplayer/multiplayerClient';
 
 interface WaitingRoomViewProps {
   room: GameRoom;
@@ -24,6 +25,7 @@ export default function WaitingRoomView({
   onSwapSide,
   onAddAiBot,
 }: WaitingRoomViewProps) {
+  const [liveRoom, setLiveRoom] = useState<GameRoom>(room);
   const [copied, setCopied] = useState(false);
   const [messages, setMessages] = useState<{ sender: string; text: string; time: string }[]>([
     {
@@ -35,10 +37,31 @@ export default function WaitingRoomView({
   const [chatInput, setChatInput] = useState('');
   const [isReady, setIsReady] = useState(false);
 
-  const redPlayer = room.players.red;
-  const blackPlayer = room.players.black;
+  // Poll room state in real-time from server
+  useEffect(() => {
+    let active = true;
+    const poll = async () => {
+      if (!room.id) return;
+      const state = await syncRoomState(room.id);
+      if (active && state && state.room) {
+        setLiveRoom(state.room);
+        if (state.room.status === 'playing') {
+          onStartGame();
+        }
+      }
+    };
+    poll();
+    const timer = setInterval(poll, 1200);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [room.id, onStartGame]);
 
-  const isHost = room.hostId === currentUser.id;
+  const redPlayer = liveRoom.players.red;
+  const blackPlayer = liveRoom.players.black;
+
+  const isHost = liveRoom.hostId === currentUser.id;
   const isPlayerInRoom = (redPlayer?.id === currentUser.id) || (blackPlayer?.id === currentUser.id);
 
   const handleCopyCode = () => {
@@ -260,7 +283,12 @@ export default function WaitingRoomView({
 
             {/* Start Game button */}
             <button
-              onClick={onStartGame}
+              onClick={async () => {
+                if (room.id) {
+                  await startRoomOnServer(room.id);
+                }
+                onStartGame();
+              }}
               disabled={!canStart}
               className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-lg cursor-pointer ${
                 canStart

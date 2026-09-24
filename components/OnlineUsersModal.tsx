@@ -24,10 +24,31 @@ export default function OnlineUsersModal({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setOnlineUsers(getOnlineAccounts(currentUser));
-    }, 5000);
-    return () => clearInterval(interval);
+    let mounted = true;
+    const fetchLive = async () => {
+      try {
+        const res = await fetch('/api/multiplayer?action=lobby_sync');
+        if (res.ok) {
+          const data = await res.json();
+          if (mounted && Array.isArray(data.onlineUsers) && data.onlineUsers.length > 0) {
+            setOnlineUsers(data.onlineUsers);
+            return;
+          }
+        }
+      } catch {
+        // fallback
+      }
+      if (mounted) {
+        setOnlineUsers(getOnlineAccounts(currentUser));
+      }
+    };
+
+    fetchLive();
+    const interval = setInterval(fetchLive, 3000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [currentUser]);
 
   const handleRefresh = async () => {
@@ -35,9 +56,17 @@ export default function OnlineUsersModal({
     setIsRefreshing(true);
     try {
       await syncUserFromCloud();
+      const res = await fetch('/api/multiplayer?action=lobby_sync');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.onlineUsers) && data.onlineUsers.length > 0) {
+          setOnlineUsers(data.onlineUsers);
+          return;
+        }
+      }
       setOnlineUsers(getOnlineAccounts(currentUser));
     } catch {
-      // ignore
+      setOnlineUsers(getOnlineAccounts(currentUser));
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
