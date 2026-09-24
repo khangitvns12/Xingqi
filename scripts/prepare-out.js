@@ -52,7 +52,23 @@ try {
     }
   }
 
-  console.log('[Deploy Helper] Successfully populated "out" directory!');
+  // 4. Also copy static assets and public to standalone directory if standalone exists
+  const standaloneDir = path.join(nextDir, 'standalone');
+  if (fs.existsSync(standaloneDir)) {
+    const standaloneStatic = path.join(standaloneDir, '.next', 'static');
+    if (fs.existsSync(nextStaticDir)) {
+      fs.mkdirSync(path.dirname(standaloneStatic), { recursive: true });
+      fs.cpSync(nextStaticDir, standaloneStatic, { recursive: true });
+      console.log('[Deploy Helper] Copied .next/static to .next/standalone/.next/static');
+    }
+    const standalonePublic = path.join(standaloneDir, 'public');
+    if (fs.existsSync(publicDir)) {
+      fs.cpSync(publicDir, standalonePublic, { recursive: true });
+      console.log('[Deploy Helper] Copied public to .next/standalone/public');
+    }
+  }
+
+  console.log('[Deploy Helper] Successfully populated "out" and standalone directories!');
 } catch (err) {
   console.error('[Deploy Helper] Error preparing "out" directory:', err);
   // Do not fail the build if this fails
