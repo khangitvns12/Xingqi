@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next';
 
+const isExport = process.env.NEXT_OUTPUT_MODE === 'export';
+
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: isExport ? 'export' : 'standalone',
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: true,

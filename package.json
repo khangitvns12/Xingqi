@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "node scripts/smart-build.mjs",
+    "build:next": "next build",
+    "build:export": "node scripts/build-static.mjs",
     "start": "next start --port 3000",
     "lint": "next lint"
   },

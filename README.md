@@ -4,56 +4,55 @@ Trò chơi Cờ Tướng Tu Tiên kết hợp phong cách Tiên Hiệp (Tu Chân
 
 ---
 
-## ☁️ Hướng Dẫn Deploy Lên Cloudflare Pages (Miễn Phí, Tốc Độ Biên Cực Nhanh)
+## 🚀 Các Phương Thức Triển Khai (Deployment Guide)
 
-Cloudflare Pages là nền tảng máy chủ biên (Edge Network) hàng đầu thế giới, hoàn toàn miễn phí băng thông, chịu tải lớn và có tốc độ tải trang cực nhanh tại Việt Nam.
+Dự án **Tiên Kỳ Đạo (Xiangqi Cultivation)** hỗ trợ đầy đủ 3 phương án triển khai tùy theo nhu cầu hạ tầng của bạn:
 
-### Cách 1: Kết Nối GitHub Với Cloudflare Pages (Khuyên Dùng - Tự Động CI/CD)
+---
 
-#### Bước 1: Đẩy mã nguồn lên GitHub
-1. Trên giao diện Google AI Studio, bạn có thể xuất mã nguồn bằng cách nhấn vào menu cài đặt (**Settings**) -> **Export to GitHub** (hoặc tải file **ZIP** về máy).
-2. Nếu tải ZIP, giải nén và mở terminal tại thư mục dự án để đẩy lên GitHub:
-```bash
-git init
-git add .
-git commit -m "feat: Xiangqi Cultivation App"
-git branch -M main
-git remote add origin https://github.com/<tai-khoan-cua-ban>/<ten-repo>.git
-git push -u origin main
-```
+### Phương Án 1: Deploy Lên Vercel (Khuyên Dùng Nhất Cho Next.js Full-Stack)
+Vercel là nền tảng máy chủ chính chủ của Next.js, hỗ trợ tự động 100% cả giao diện Frontend lẫn Serverless API (`/api/gemini/align-frame`, `/api/multiplayer`, `/api/sync`):
 
-#### Bước 2: Tạo dự án trên Cloudflare Dashboard
-1. Truy cập [dash.cloudflare.com](https://dash.cloudflare.com) và đăng nhập vào tài khoản Cloudflare của bạn.
-2. Tại thanh điều hướng bên trái, chọn **Workers & Pages** -> bấm nút **Create application** (hoặc **Create**).
-3. Chọn thẻ **Pages** -> chọn **Connect to Git**.
-4. Cấp quyền truy cập GitHub, chọn repository chứa dự án cờ tướng của bạn và bấm **Begin setup**.
+1. Đăng nhập [vercel.com](https://vercel.com) bằng tài khoản GitHub.
+2. Bấm **Add New...** -> **Project** -> Chọn repository `Xingqi`.
+3. Vercel tự động nhận diện:
+   - **Framework Preset**: `Next.js`
+   - **Build Command**: `next build` (hoặc `npm run build`)
+   - **Output Directory**: `.next` (Vercel tự xử lý, không cần `out`)
+4. Cấu hình biến môi trường (**Environment Variables**):
+   - `GEMINI_API_KEY`: Điền API key Google AI của bạn (nếu dùng tính năng AI tiên tri hoặc canh chỉnh khung viền).
+5. Bấm **Deploy**. Sau ~1 phút, bạn nhận được tên miền `https://<ten-du-an>.vercel.app`.
 
-#### Bước 3: Cấu hình Build Settings trên Cloudflare Pages
-Tại màn hình cài đặt:
-- **Project name**: Đặt tên dự án (ví dụ: `ky-dao-tien-duyen`). Trang web sẽ có tên miền mặc định là `https://<ten-du-an>.pages.dev`.
-- **Production branch**: `main`
-- **Framework preset**: Chọn **None** (hoặc **Next.js (Static HTML Export)**)
-- **Build command**: 
-  ```bash
-  npm run build
-  ```
-- **Build output directory**: 
-  ```
-  out
-  ```
-  *(⚠️ **LƯU Ý QUAN TRỌNG**: Dự án đã được cấu hình `output: 'export'` sẵn trong `next.config.ts`. Khi build, toàn bộ file trang web sẽ được tạo ra trong thư mục `out`. TUYỆT ĐỐI KHÔNG điền là `.next` vì trong `.next` có chứa file cache webpack `0.pack` nặng 39MB sẽ bị Cloudflare chặn lỗi > 25MB! Điền `out` là hoàn tất 100%!).*
+---
 
-#### Bước 4: Thiết lập Biến Môi Trường & Compatibility Flag
-Nhấn vào mục **Environment variables (advanced)** và thêm:
-- `NODE_VERSION` = `20`
-- `GEMINI_API_KEY` = `<Khóa API Gemini của bạn>` *(nếu dùng tính năng AI tiên tri hoặc canh chỉnh khung viền)*
+### Phương Án 2: Deploy Lên Cloudflare Pages (Miễn Phí CDN Toàn Cầu, Static HTML Export)
+Dự án đã tích hợp cơ chế `Smart-Build` tự động. Khi phát hiện môi trường Cloudflare Pages (`CF_PAGES=1`), hệ thống sẽ tự động xuất bản toàn bộ trang web thành Static HTML vào thư mục `out`:
 
-> 💡 **Lưu ý quan trọng về Runtime**:
-> Sau khi tạo dự án xong, hãy vào mục **Settings** -> **Functions** -> **Compatibility Flags** -> thêm cờ `nodejs_compat` cho cả **Production** và **Preview** để kích hoạt đầy đủ thư viện Node.js trên Cloudflare Edge.
+#### Các bước cài đặt trên Cloudflare Pages:
+1. Truy cập [dash.cloudflare.com](https://dash.cloudflare.com) -> **Workers & Pages** -> **Create application** -> **Pages** -> **Connect to Git**.
+2. Chọn repository GitHub chứa dự án và bấm **Begin setup**.
+3. Cấu hình Build Settings:
+   - **Framework preset**: Chọn `Next.js (Static HTML Export)` (hoặc `None`)
+   - **Build command**: `npm run build` (hoặc `npm run build:export`)
+   - **Build output directory**: `out`
+4. Cấu hình Environment Variables (Quan trọng):
+   - `NODE_VERSION` = `20`
+   - `GEMINI_API_KEY` = `<Khóa API Gemini của bạn>`
+5. Bấm **Save and Deploy**. Cloudflare Pages sẽ biên dịch và xuất dữ liệu vào thư mục `out` thành công 100%!
 
-#### Bước 5: Hoàn tất & Nhận Link Public
-- Bấm **Save and Deploy**. Cloudflare sẽ tự động tải mã nguồn, build và xuất bản trong vòng 1-2 phút.
-- Bạn sẽ nhận được đường link công khai: 👉 `https://ky-dao-tien-duyen.pages.dev`
+*Lưu ý khi chạy Static trên Cloudflare Pages: Mọi tính năng chơi cờ tướng với người chơi cục bộ, chơi với Bot AI, hệ thống Cảnh Giới tu tiên, danh hiệu, âm thanh, pháp bảo và lưu trữ tài khoản đều hoạt động hoàn hảo và lưu trữ an toàn trong `localStorage` của trình duyệt.*
+
+---
+
+### Phương Án 3: Deploy Lên Render / Railway / VPS (Tối Ưu Cho Multiplayer SSE Dài Hạn)
+Nếu bạn muốn máy chủ duy trì phòng chơi trực tiếp thời gian thực liên tục qua Server-Sent Events (SSE):
+1. Đăng nhập [Render.com](https://render.com) -> **New +** -> **Web Service** -> Kết nối GitHub.
+2. Thiết lập:
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start`
+   - **Node Version**: `>= 20.0.0`
+3. Nhấn **Create Web Service**. Render sẽ chạy máy chủ Node.js trên cổng 3000, duy trì kết nối SSE và bộ nhớ phòng chơi liên tục.
 
 ---
 
