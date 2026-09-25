@@ -37,28 +37,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (action === 'get_session') {
-      const cookieUid = req.cookies.get('tkd_uid')?.value;
-      const store = loadServerCloudStore();
-
-      if (cookieUid) {
-        const found = store.accounts.find((a) => a.id === cookieUid);
-        if (found) {
-          return NextResponse.json({ success: true, account: found });
-        }
-      }
-
-      // If no cookie, return available accounts (excluding bots) so the user can easily select
       return NextResponse.json({
         success: true,
         account: null,
-        availableAccounts: store.accounts.map((a) => ({
-          id: a.id,
-          username: a.username,
-          daoName: a.daoName,
-          realmLevel: a.realmLevel,
-          elo: a.elo,
-          avatarUrl: a.avatarUrl,
-        })),
       });
     }
 
@@ -67,20 +48,12 @@ export async function GET(req: NextRequest) {
     const rooms = getAllServerRooms();
     const chatMessages = getWorldChatMessages();
 
-    // Check session account
-    const cookieUid = req.cookies.get('tkd_uid')?.value;
-    let sessionAccount = null;
-    if (cookieUid) {
-      const store = loadServerCloudStore();
-      sessionAccount = store.accounts.find((a) => a.id === cookieUid) || null;
-    }
-
     return NextResponse.json({
       success: true,
       onlineUsers,
       rooms,
       chatMessages,
-      sessionAccount,
+      sessionAccount: null,
     });
   } catch (err: any) {
     console.error('[Multiplayer API] GET Error:', err);
@@ -93,18 +66,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action } = body;
 
-    const res = NextResponse.json({ success: true });
-
     if (action === 'HEARTBEAT') {
       const { user, status, roomId } = body;
       if (user && user.id) {
         recordHeartbeat(user, status || 'lobby', roomId);
-        // Set persistent cookie so that clearing browser cache does not lose the session
-        res.cookies.set('tkd_uid', user.id, {
-          path: '/',
-          maxAge: 365 * 24 * 60 * 60, // 1 year
-          sameSite: 'lax',
-        });
       }
       return NextResponse.json({
         success: true,
@@ -113,20 +78,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'SET_SESSION') {
-      const { userId } = body;
-      const response = NextResponse.json({ success: true });
-      if (userId) {
-        response.cookies.set('tkd_uid', userId, {
-          path: '/',
-          maxAge: 365 * 24 * 60 * 60,
-          sameSite: 'lax',
-        });
-      }
-      return response;
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'SEND_CHAT') {
-      const { sender, realm, title, avatarUrl, message } = body;
+      const { sender, realm, title, avatarUrl, frameId, message } = body;
       if (!message || !message.trim()) {
         return NextResponse.json({ success: false, error: 'Nội dung tin nhắn trống' }, { status: 400 });
       }
@@ -136,6 +92,7 @@ export async function POST(req: NextRequest) {
         realm: realm || 'Phàm Nhân',
         title: title || 'Kỳ Đạo Đạo Đồng',
         avatarUrl: avatarUrl || '',
+        frameId: frameId || '',
         message: message.trim(),
       });
 

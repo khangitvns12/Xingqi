@@ -37,8 +37,9 @@ import {
   sendWorldChat,
   createRoomOnServer,
   joinRoomOnServer,
-  getSessionAccount,
+  subscribeRealtimeStream,
 } from '../lib/multiplayer/multiplayerClient';
+import ClearCacheModal from '../components/ClearCacheModal';
 import { ChatMessage } from '../lib/server/multiplayerStore';
 import { BOT_USER_IDS } from '../lib/storage/userTypes';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
@@ -70,25 +71,68 @@ export default function HomePage() {
   const [showBotMatch, setShowBotMatch] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showClearCache, setShowClearCache] = useState(false);
 
   // Online cultivators count (statically initialized to 1 to guarantee matching SSR & client initial render)
   const [onlineCount, setOnlineCount] = useState<number>(1);
 
-  // Automatically sync all accounts, custom items, and settings from cloud database on startup
+  // Automatically sync custom items and settings from cloud database on startup
   useEffect(() => {
-    Promise.all([syncUserFromCloud(), syncItemsFromCloud()]).catch((err) => {
-      console.warn('[Sync] Initial cloud sync warning:', err);
+    syncItemsFromCloud().catch((err) => {
+      console.warn('[Sync] Items cloud sync warning:', err);
     });
-
-    // Auto-restore session if user identity cookie exists
-    getSessionAccount().then((sessionAcc) => {
-      if (sessionAcc && (user.isGuest || user.id === 'user_main')) {
-        setUser(sessionAcc);
-      }
-    }).catch(() => {});
   }, []);
 
-  // Real-time multiplayer lobby sync (rooms, online users, world chat)
+  // Real-time SSE stream subscription (immediate updates for moves, chat, rooms, online users)
+  useEffect(() => {
+    const unsubscribe = subscribeRealtimeStream((event) => {
+      if (event.type === 'chat') {
+        if (event.data && Array.isArray(event.data.chatMessages)) {
+          setChatMessages(event.data.chatMessages);
+        }
+      } else if (event.type === 'lobby_sync') {
+        if (Array.isArray(event.data.rooms)) {
+          const serverRoomIds = new Set(event.data.rooms.map((r) => r.id));
+          const baseRooms = INITIAL_LOBBY_ROOMS.filter((r) => !serverRoomIds.has(r.id));
+          setRooms([...event.data.rooms, ...baseRooms]);
+        }
+        if (Array.isArray(event.data.onlineUsers)) {
+          setOnlineUsersList(event.data.onlineUsers);
+          setOnlineCount(Math.max(1, event.data.onlineUsers.length));
+        }
+        if (Array.isArray(event.data.chatMessages) && event.data.chatMessages.length > 0) {
+          setChatMessages(event.data.chatMessages);
+        }
+      } else if (event.type === 'room_update') {
+        setRooms((prev) => {
+          const idx = prev.findIndex((r) => r.id === event.data.roomId);
+          if (idx >= 0) {
+            const copy = [...prev];
+            copy[idx] = event.data.state.room;
+            return copy;
+          }
+          return [event.data.state.room, ...prev];
+        });
+        setActiveRoom((prev) => {
+          if (prev && prev.id === event.data.roomId) {
+            if (event.data.state.room.status === 'playing' && currentView === 'waiting') {
+              setCurrentView('game');
+            }
+            return event.data.state.room;
+          }
+          return prev;
+        });
+      } else if (event.type === 'room_deleted') {
+        setRooms((prev) => prev.filter((r) => r.id !== event.data.roomId));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [currentView]);
+
+  // Real-time multiplayer lobby sync fallback polling (rooms, online users, world chat + heartbeat)
   useEffect(() => {
     let isMounted = true;
     const pollLobby = async () => {
@@ -107,9 +151,6 @@ export default function HomePage() {
           if (Array.isArray(res.chatMessages) && res.chatMessages.length > 0) {
             setChatMessages(res.chatMessages);
           }
-          if (res.sessionAccount && user.isGuest) {
-            setUser(res.sessionAccount);
-          }
         }
       } catch {
         // network issue fallback
@@ -117,12 +158,12 @@ export default function HomePage() {
     };
 
     pollLobby();
-    const timer = setInterval(pollLobby, 2500);
+    const timer = setInterval(pollLobby, 3000);
     return () => {
       isMounted = false;
       clearInterval(timer);
     };
-  }, [user.id, user.isGuest, setUser]);
+  }, [user.id, user.isGuest]);
 
   // Force authentication on first visit if user has not logged in (user.isGuest)
   const isAuthModalOpen = showAuth || Boolean(user?.isGuest);
@@ -616,6 +657,7 @@ export default function HomePage() {
         inGame={currentView !== 'lobby'}
         onlineCount={onlineCount}
         onOpenOnlineUsers={() => setShowOnlineUsers(true)}
+        onOpenClearCache={() => setShowClearCache(true)}
       />
 
       {/* Main Content Area */}
@@ -805,6 +847,15 @@ export default function HomePage() {
           onAccountUpdated={() => {
             setUser(loadUserProfile());
           }}
+        />
+      )}
+
+      {/* Clear Cache Modal (Thanh Lọc Tiên Khí / Xóa Bộ Nhớ Đệm) */}
+      {showClearCache && (
+        <ClearCacheModal
+          isOpen={showClearCache}
+          onClose={() => setShowClearCache(false)}
+          onSuccessToast={(msg) => setToast({ message: msg, type: 'success' })}
         />
       )}
 

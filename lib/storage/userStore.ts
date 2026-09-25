@@ -5,17 +5,6 @@ import { CULTIVATION_REALMS, DAOIST_TITLES, getRealmByLevel } from '../cultivati
 import { GamePlayer, GameRoom } from '../xiangqi/types';
 
 export type { UserAccount, SystemConfig } from './userTypes';
-export {
-  DEFAULT_SYSTEM_CONFIG,
-  ADMIN_USER,
-  DEFAULT_USER,
-  GUEST_USER,
-  SEED_ACCOUNTS,
-  STORAGE_KEY,
-  ACCOUNTS_STORAGE_KEY,
-  SYSTEM_CONFIG_KEY,
-  KICKED_KEY,
-} from './userTypes';
 
 import {
   UserAccount,
@@ -32,6 +21,20 @@ import {
   sanitizeUserAccount,
   BOT_USER_IDS,
 } from './userTypes';
+
+export {
+  DEFAULT_SYSTEM_CONFIG,
+  ADMIN_USER,
+  DEFAULT_USER,
+  GUEST_USER,
+  SEED_ACCOUNTS,
+  STORAGE_KEY,
+  ACCOUNTS_STORAGE_KEY,
+  SYSTEM_CONFIG_KEY,
+  KICKED_KEY,
+  sanitizeUserAccount,
+  BOT_USER_IDS,
+};
 
 let memorySystemConfig: SystemConfig | null = null;
 
@@ -722,6 +725,7 @@ export interface LeaderboardEntry {
   wins: number;
   winRate: number;
   avatarUrl: string;
+  selectedFrameId?: string;
   isCurrentUser?: boolean;
   account?: UserAccount;
 }
@@ -754,6 +758,7 @@ export function generateLeaderboard(currentUser: UserAccount): LeaderboardEntry[
       wins,
       winRate: Math.round((wins / mCount) * 100),
       avatarUrl: acc.avatarUrl,
+      selectedFrameId: acc.selectedFrameId || '',
       isCurrentUser: isCurrent,
       account: acc,
     };
@@ -778,6 +783,7 @@ export function generateLeaderboard(currentUser: UserAccount): LeaderboardEntry[
       wins: userWins,
       winRate: userWinRate,
       avatarUrl: safeCurrentUser.avatarUrl,
+      selectedFrameId: safeCurrentUser.selectedFrameId || '',
       isCurrentUser: true,
       account: safeCurrentUser,
     });

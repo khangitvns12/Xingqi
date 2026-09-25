@@ -64,7 +64,9 @@ import {
   syncRoomState,
   resignGameOnServer,
   offerDrawOnServer,
+  subscribeRealtimeStream,
 } from '../lib/multiplayer/multiplayerClient';
+import { ServerGameRoomState } from '../lib/server/multiplayerStore';
 import JadeChessboard from './JadeChessboard';
 import AvatarWithFrame from './AvatarWithFrame';
 
@@ -382,7 +384,13 @@ export default function GameView({
         blackTime: movingPiece.side === 'black' ? blackTime + room.increment : blackTime,
         captured: targetPiece,
         skillFx: skillType,
-      }).catch((e) => console.warn('Submit move error:', e));
+      })
+        .then((res) => {
+          if (res && res.version) {
+            lastServerVersionRef.current = res.version;
+          }
+        })
+        .catch((e) => console.warn('Submit move error:', e));
     }
   };
 
@@ -457,9 +465,80 @@ export default function GameView({
     }
   }, [currentTurn, gameOver, opponentPlayer, isCurrentAi, board, mySide]);
 
-  // Real-time polling for multiplayer online room moves
+  // Real-time server state management for multiplayer online room moves
   const lastServerVersionRef = useRef<number>(1);
 
+  // Apply state updates from server (instant SSE or periodic fallback)
+  const applyServerState = (state: ServerGameRoomState) => {
+    if (!state) return;
+
+    // Check if game ended on server
+    if (state.gameOver && !gameOver) {
+      setGameOver(true);
+      setWinner(state.winner || 'draw');
+      setGameOverReason(state.gameOverReason || 'Ván đấu đã kết thúc');
+      return;
+    }
+
+    // Check if opponent made a new move
+    if (state.version > lastServerVersionRef.current) {
+      lastServerVersionRef.current = state.version;
+
+      if (state.currentTurn === mySide && state.moveHistory.length > 0) {
+        const oppMove = state.moveHistory[state.moveHistory.length - 1];
+
+        setBoard(state.board);
+        setCurrentTurn(state.currentTurn);
+        setMoveHistory(state.moveHistory);
+        setLastMove({ from: oppMove.from, to: oppMove.to });
+        if (typeof state.redTime === 'number') setRedTime(state.redTime);
+        if (typeof state.blackTime === 'number') setBlackTime(state.blackTime);
+
+        if (oppMove.captured) {
+          const skill = oppMove.skillFx || getSkillTypeForPiece(oppMove.piece.type);
+          soundManager.playCapture(skill);
+          setActiveSkillFx({
+            id: 'fx_' + Date.now(),
+            type: skill,
+            row: oppMove.to.r,
+            col: oppMove.to.c,
+            attackerSide: oppMove.piece.side,
+            skillName: getSkillNameVi(skill),
+          });
+          setBoardShake(true);
+          setTimeout(() => setBoardShake(false), 400);
+          setTimeout(() => setActiveSkillFx(null), 1400);
+
+          if (oppMove.piece.side === 'red') {
+            setCapturedRed((prev) => [...prev, oppMove.captured!]);
+          } else {
+            setCapturedBlack((prev) => [...prev, oppMove.captured!]);
+          }
+        } else {
+          soundManager.playPieceMove();
+        }
+
+        if (isSideInCheck(state.board, mySide)) {
+          soundManager.playCheckAlert();
+        }
+      }
+    }
+  };
+
+  // Real-time SSE stream listener for instant moves (<30ms)
+  useEffect(() => {
+    if (opponentPlayer.isAi || gameOver || !room.id) return;
+
+    const unsub = subscribeRealtimeStream((event) => {
+      if (event.type === 'room_update' && event.data.roomId === room.id) {
+        applyServerState(event.data.state);
+      }
+    });
+
+    return () => unsub();
+  }, [opponentPlayer.isAi, gameOver, room.id, mySide]);
+
+  // Periodic fallback polling
   useEffect(() => {
     if (opponentPlayer.isAi || gameOver || !room.id) return;
 
@@ -467,63 +546,13 @@ export default function GameView({
     const pollTimer = setInterval(async () => {
       try {
         const state = await syncRoomState(room.id);
-        if (!isMounted || !state) return;
-
-        // Check if game ended on server
-        if (state.gameOver && !gameOver) {
-          setGameOver(true);
-          setWinner(state.winner || 'draw');
-          setGameOverReason(state.gameOverReason || 'Ván đấu đã kết thúc');
-          return;
-        }
-
-        // Check if opponent made a new move
-        if (state.version > lastServerVersionRef.current) {
-          lastServerVersionRef.current = state.version;
-
-          if (state.currentTurn === mySide && state.moveHistory.length > 0) {
-            const oppMove = state.moveHistory[state.moveHistory.length - 1];
-
-            setBoard(state.board);
-            setCurrentTurn(state.currentTurn);
-            setMoveHistory(state.moveHistory);
-            setLastMove({ from: oppMove.from, to: oppMove.to });
-            if (typeof state.redTime === 'number') setRedTime(state.redTime);
-            if (typeof state.blackTime === 'number') setBlackTime(state.blackTime);
-
-            if (oppMove.captured) {
-              const skill = oppMove.skillFx || getSkillTypeForPiece(oppMove.piece.type);
-              soundManager.playCapture(skill);
-              setActiveSkillFx({
-                id: 'fx_' + Date.now(),
-                type: skill,
-                row: oppMove.to.r,
-                col: oppMove.to.c,
-                attackerSide: oppMove.piece.side,
-                skillName: getSkillNameVi(skill),
-              });
-              setBoardShake(true);
-              setTimeout(() => setBoardShake(false), 400);
-              setTimeout(() => setActiveSkillFx(null), 1400);
-
-              if (oppMove.piece.side === 'red') {
-                setCapturedRed((prev) => [...prev, oppMove.captured!]);
-              } else {
-                setCapturedBlack((prev) => [...prev, oppMove.captured!]);
-              }
-            } else {
-              soundManager.playPieceMove();
-            }
-
-            if (isSideInCheck(state.board, mySide)) {
-              soundManager.playCheckAlert();
-            }
-          }
+        if (isMounted && state) {
+          applyServerState(state);
         }
       } catch {
         // ignore network error
       }
-    }, 850);
+    }, 1200);
 
     return () => {
       isMounted = false;

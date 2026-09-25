@@ -45,23 +45,21 @@ let memoryStore: CloudStoreData | null = null;
 
 function getInitialStore(): CloudStoreData {
   return {
-    accounts: [...SEED_ACCOUNTS],
+    accounts: [], // Đạo tịch (tài khoản/mật khẩu) tuyệt đối không lưu trên máy chủ
     customFrames: [...DEFAULT_FRAMES],
     dharmaIdols: [...DEFAULT_DHARMA_IDOLS],
     customArtifacts: [...DEFAULT_ARTIFACTS],
     customTitles: [...DEFAULT_CUSTOM_TITLES],
     systemConfig: { ...DEFAULT_SYSTEM_CONFIG },
     lastUpdated: Date.now(),
-    version: '1.4.0',
+    version: '1.5.0',
     isEncrypted: true,
   };
 }
 
 export function loadServerCloudStore(): CloudStoreData {
   if (memoryStore) {
-    if (Array.isArray(memoryStore.accounts)) {
-      memoryStore.accounts = memoryStore.accounts.map(sanitizeUserAccount);
-    }
+    memoryStore.accounts = []; // Luôn đảm bảo rỗng trên máy chủ
     return memoryStore;
   }
 
@@ -69,32 +67,15 @@ export function loadServerCloudStore(): CloudStoreData {
     // 1. Try reading encrypted database first
     if (fs.existsSync(ENCRYPTED_DB_FILE)) {
       const decrypted = readEncryptedFile<CloudStoreData>(ENCRYPTED_DB_FILE);
-      if (decrypted && Array.isArray(decrypted.accounts)) {
+      if (decrypted) {
+        decrypted.accounts = []; // Xoá bỏ mọi đạo tịch đã lưu
         ensureRequiredDefaults(decrypted);
         memoryStore = decrypted;
         return memoryStore;
       }
     }
-
-    // 2. Migration: If legacy plain JSON exists, read, migrate, and save encrypted!
-    if (fs.existsSync(LEGACY_DATA_FILE)) {
-      const content = fs.readFileSync(LEGACY_DATA_FILE, 'utf-8');
-      const parsed = JSON.parse(content) as CloudStoreData;
-      if (parsed && Array.isArray(parsed.accounts)) {
-        ensureRequiredDefaults(parsed);
-        memoryStore = parsed;
-        // Save to encrypted db immediately
-        saveServerCloudStore(memoryStore);
-        try {
-          fs.renameSync(LEGACY_DATA_FILE, `${LEGACY_DATA_FILE}.migrated.bak`);
-        } catch {
-          // ignore
-        }
-        return memoryStore;
-      }
-    }
   } catch (err) {
-    console.error('[CloudStore] Error reading encrypted store from disk:', err);
+    console.error('[CloudStore] Error reading store from disk:', err);
   }
 
   memoryStore = getInitialStore();
@@ -103,31 +84,9 @@ export function loadServerCloudStore(): CloudStoreData {
 }
 
 function ensureRequiredDefaults(store: CloudStoreData): void {
-  if (Array.isArray(store.accounts)) {
-    store.accounts = store.accounts
-      .map(sanitizeUserAccount)
-      .filter(
-        (a) =>
-          !BOT_USER_IDS.has(a.id) &&
-          !a.username.includes('kiem_ma') &&
-          !a.username.includes('bang_phach') &&
-          !a.username.includes('bach_van') &&
-          !a.username.includes('tu_tieu')
-      );
-  } else {
-    store.accounts = [...SEED_ACCOUNTS];
-  }
-
-  // Ensure Admin and Default user exist ONLY if not already present
-  const hasAdmin = store.accounts.some((a) => a.id === ADMIN_USER.id || a.username.toLowerCase() === ADMIN_USER.username.toLowerCase());
-  if (!hasAdmin) {
-    store.accounts.unshift(sanitizeUserAccount({ ...ADMIN_USER }));
-  }
-
-  const hasDefault = store.accounts.some((a) => a.id === DEFAULT_USER.id || a.username.toLowerCase() === DEFAULT_USER.username.toLowerCase());
-  if (!hasDefault) {
-    store.accounts.push(sanitizeUserAccount({ ...DEFAULT_USER }));
-  }
+  // Đạo tịch người dùng được lưu trữ an toàn 100% tại Client (LocalStorage & IndexedDB).
+  // Máy chủ không lưu trữ tài khoản, mật khẩu hay đạo tịch cá nhân.
+  store.accounts = [];
 
   // Ensure systemConfig exists
   if (!store.systemConfig || typeof store.systemConfig.defaultElo !== 'number') {
@@ -143,12 +102,13 @@ function ensureRequiredDefaults(store: CloudStoreData): void {
 export function saveServerCloudStore(data: CloudStoreData): void {
   memoryStore = {
     ...data,
+    accounts: [], // Bảo đảm an toàn bảo mật: Tuyệt đối không ghi thông tin tài khoản lên ổ cứng máy chủ
     isEncrypted: true,
     lastUpdated: Date.now(),
   };
 
   try {
-    // Write AES-256-GCM encrypted database file
+    // Write AES-256-GCM encrypted database file (chỉ chứa vật phẩm, khung, tượng pháp, cấu hình)
     writeEncryptedFile(ENCRYPTED_DB_FILE, memoryStore);
   } catch (err) {
     console.error('[CloudStore] Error writing encrypted store to disk:', err);
@@ -157,56 +117,17 @@ export function saveServerCloudStore(data: CloudStoreData): void {
 
 // Helpers for specific entities
 export function upsertAccountInServer(account: UserAccount): UserAccount {
-  const store = loadServerCloudStore();
-  const index = store.accounts.findIndex(
-    (a) => a.id === account.id || a.username.toLowerCase() === account.username.toLowerCase()
-  );
-
-  const updatedAccount: UserAccount = sanitizeUserAccount({
-    ...(index >= 0 ? store.accounts[index] : {}),
-    ...account,
-    updatedAt: account.updatedAt || Date.now(),
-    lastActive: Date.now(),
-  });
-
-  if (index >= 0) {
-    store.accounts[index] = updatedAccount;
-  } else {
-    store.accounts.push(updatedAccount);
-  }
-
-  saveServerCloudStore(store);
-  return updatedAccount;
+  // Không lưu đạo tịch người dùng lên máy chủ
+  return sanitizeUserAccount(account);
 }
 
 export function batchUpsertAccountsInServer(accounts: UserAccount[]): UserAccount[] {
-  const store = loadServerCloudStore();
-  const map = new Map<string, UserAccount>();
+  // Không lưu đạo tịch người dùng lên máy chủ
+  return accounts.map(sanitizeUserAccount);
+}
 
-  store.accounts.forEach((a) => {
-    const sanitized = sanitizeUserAccount(a);
-    map.set(sanitized.id, sanitized);
-    map.set(sanitized.username.toLowerCase(), sanitized);
-  });
-
-  accounts.forEach((acc) => {
-    const existing = map.get(acc.id) || map.get(acc.username.toLowerCase());
-    const merged: UserAccount = sanitizeUserAccount({
-      ...(existing || {}),
-      ...acc,
-      updatedAt: acc.updatedAt || Date.now(),
-      lastActive: Date.now(),
-    });
-    map.set(merged.id, merged);
-  });
-
-  // Unique list by id
-  const dedupedMap = new Map<string, UserAccount>();
-  Array.from(map.values()).forEach((acc) => dedupedMap.set(acc.id, acc));
-
-  store.accounts = Array.from(dedupedMap.values());
-  saveServerCloudStore(store);
-  return store.accounts;
+export function deleteAccountInServer(_idOrUsername: string): boolean {
+  return true;
 }
 
 export function upsertFramesInServer(frames: CustomFrame[]): CustomFrame[] {
@@ -279,13 +200,6 @@ export function upsertTitlesInServer(titles: CustomTitle[]): CustomTitle[] {
   store.customTitles = Array.from(map.values());
   saveServerCloudStore(store);
   return store.customTitles;
-}
-
-export function deleteAccountInServer(accountId: string): UserAccount[] {
-  const store = loadServerCloudStore();
-  store.accounts = store.accounts.filter((a) => a.id !== accountId);
-  saveServerCloudStore(store);
-  return store.accounts;
 }
 
 export function deleteFrameInServer(frameId: string): CustomFrame[] {

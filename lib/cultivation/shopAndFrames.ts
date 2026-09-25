@@ -1,361 +1,380 @@
-'use client';
+export interface CustomFrame {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  color?: string;
+  glowColor?: string;
+  scale?: number;
+  offsetX?: number;
+  offsetY?: number;
+  description?: string;
+  rarity?: string;
+  minRealmLevel?: number;
+  isPreset?: boolean;
+  inShop?: boolean;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
-export type { CustomFrame, DharmaIdol, CustomArtifact, CustomTitle } from './shopTypes';
-export {
-  DEFAULT_FRAMES,
-  DEFAULT_DHARMA_IDOLS,
-  DEFAULT_ARTIFACTS,
-  DEFAULT_CUSTOM_TITLES,
-  FRAMES_KEY,
-  DHARMA_KEY,
-  ARTIFACTS_KEY,
-  TITLES_KEY,
-} from './shopTypes';
+export interface DharmaIdol {
+  id: string;
+  name: string;
+  title: string;
+  price: number;
+  imageUrl: string;
+  description: string;
+  rarity?: string;
+  auraColor?: string;
+  isAnimated?: boolean;
+  minRealmLevel?: number;
+  inShop?: boolean;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
-import {
-  CustomFrame,
-  DharmaIdol,
-  CustomArtifact,
-  CustomTitle,
-  DEFAULT_FRAMES,
-  DEFAULT_DHARMA_IDOLS,
-  DEFAULT_ARTIFACTS,
-  DEFAULT_CUSTOM_TITLES,
-  FRAMES_KEY,
-  DHARMA_KEY,
-  ARTIFACTS_KEY,
-  TITLES_KEY,
-} from './shopTypes';
+export interface CustomArtifact {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  description: string;
+  rarity?: string;
+  auraColor?: string;
+  skillBonus?: string;
+  effect?: string;
+  isAnimated?: boolean;
+  minRealmLevel?: number;
+  inShop?: boolean;
+  createdBy?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
-// In-memory cache to eliminate repetitive synchronous localStorage parsing lag
-let memoryFrames: CustomFrame[] | null = null;
-let memoryDharma: DharmaIdol[] | null = null;
-let memoryArtifacts: CustomArtifact[] | null = null;
-let memoryTitles: CustomTitle[] | null = null;
+export const DEFAULT_CUSTOM_FRAMES: CustomFrame[] = [
+  {
+    id: 'frame_celestial_gold',
+    name: 'Thần Hoàng Kim Long Hào Quang',
+    price: 1500,
+    color: '#ffd700',
+    glowColor: '#f59e0b',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
+    description: 'Khung hào quang kim sắc chí tôn hội tụ long khí tiên gia.',
+    rarity: 'legendary',
+    minRealmLevel: 6,
+    isPreset: true,
+  },
+  {
+    id: 'frame_purple_thunder',
+    name: 'Cửu Tiêu Lôi Đình Huyễn Quang',
+    price: 1200,
+    color: '#a855f7',
+    glowColor: '#9333ea',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
+    description: 'Lôi đình cửu tiêu lượn quanh bảo vệ nguyên thần, uy áp lăng lệ.',
+    rarity: 'epic',
+    minRealmLevel: 4,
+    isPreset: true,
+  },
+  {
+    id: 'frame_emerald_lotus',
+    name: 'Bích Ngọc Thanh Liên Vòng Sáng',
+    price: 800,
+    color: '#10b981',
+    glowColor: '#059669',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
+    description: 'Hoa sen ngọc bích thanh tịnh xua tan tạp niệm, tịnh hóa tâm ma.',
+    rarity: 'rare',
+    minRealmLevel: 2,
+    isPreset: true,
+  },
+  {
+    id: 'frame_phoenix_fire',
+    name: 'Phượng Hoàng Liệt Hỏa Kim Quang',
+    price: 1000,
+    color: '#f97316',
+    glowColor: '#ea580c',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
+    description: 'Niết bàn chi hỏa thiêu đốt hư không, bộc phát sức mạnh kinh thế.',
+    rarity: 'epic',
+    minRealmLevel: 3,
+    isPreset: true,
+  },
+  {
+    id: 'frame_ice_crystal',
+    name: 'Vạn Niên Hàn Băng Phách Quang',
+    price: 900,
+    color: '#06b6d4',
+    glowColor: '#0891b2',
+    scale: 1.15,
+    offsetX: 0,
+    offsetY: 0,
+    description: 'Hàn băng ngưng kết ngàn năm phong tỏa sát khí đối thủ.',
+    rarity: 'rare',
+    minRealmLevel: 2,
+    isPreset: true,
+  },
+];
+
+export const DEFAULT_DHARMA_IDOLS: DharmaIdol[] = [
+  {
+    id: 'dharma_sword_god',
+    name: 'Kiếm Thần Hiển Thánh',
+    title: 'Vạn Kiếm Quy Tông',
+    price: 2500,
+    imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=300&auto=format&fit=crop&q=80',
+    description: 'Pháp tướng vô thượng kiếm ý, triệu hoán vạn thanh phi kiếm tề xuất.',
+    rarity: 'legendary',
+    auraColor: '#ffd700',
+    minRealmLevel: 5,
+  },
+  {
+    id: 'dharma_buddha_gold',
+    name: 'Kim Thân La Hán',
+    title: 'Bất Hoại Pháp Thân',
+    price: 2200,
+    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&auto=format&fit=crop&q=80',
+    description: 'Pháp thân kim cương hộ thể, vạn tà bất xâm, phòng ngự tuyệt đối.',
+    rarity: 'epic',
+    auraColor: '#eab308',
+    minRealmLevel: 4,
+  },
+  {
+    id: 'dharma_dragon_emperor',
+    name: 'Thương Long Thần Đế',
+    title: 'Long Uy Trấn Thế',
+    price: 3000,
+    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+    description: 'Chân long thượng cổ thức tỉnh gầm thét, chấn nhiếp muôn trùng kỳ sĩ.',
+    rarity: 'legendary',
+    auraColor: '#06b6d4',
+    minRealmLevel: 6,
+  },
+  {
+    id: 'dharma_nine_tails',
+    name: 'Cửu Vĩ Thiên Hồ',
+    title: 'Huyễn Hoang Mị Ảnh',
+    price: 1800,
+    imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80',
+    description: 'Huyễn ảo khôn lường, dẫn dụ đối thủ lạc vào mê trận không lối thoát.',
+    rarity: 'rare',
+    auraColor: '#ec4899',
+    minRealmLevel: 3,
+  },
+];
+
+export const DEFAULT_CUSTOM_ARTIFACTS: CustomArtifact[] = [
+  {
+    id: 'art_tru_tien_kiem',
+    name: 'Tru Tiên Cổ Kiếm',
+    price: 3500,
+    imageUrl: 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?w=300&auto=format&fit=crop&q=80',
+    description: 'Thượng cổ thần binh, chém đứt nhân quả luân hồi.',
+    rarity: 'legendary',
+    auraColor: '#ffd700',
+    skillBonus: 'Gia tăng 15% uy lực chiêu thức bắt quân',
+    minRealmLevel: 7,
+  },
+  {
+    id: 'art_dong_hoang_chung',
+    name: 'Đông Hoàng Thần Chung',
+    price: 3200,
+    imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=300&auto=format&fit=crop&q=80',
+    description: 'Thiên địa đệ nhất chí bảo, trấn áp thời không và khí vận.',
+    rarity: 'legendary',
+    auraColor: '#06b6d4',
+    skillBonus: 'Tăng thêm 3 giây mỗi nước đi',
+    minRealmLevel: 6,
+  },
+  {
+    id: 'art_bat_quai_kinh',
+    name: 'Cửu Cung Bát Quái Kính',
+    price: 1500,
+    imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&auto=format&fit=crop&q=80',
+    description: 'Soi chiếu âm dương hư thực, phán đoán thế trận tinh thông.',
+    rarity: 'rare',
+    auraColor: '#a855f7',
+    skillBonus: 'Tăng điểm tu vi nhận được sau mỗi ván thắng',
+    minRealmLevel: 2,
+  },
+];
+
+const FRAMES_STORAGE_KEY = 'tien_ky_dao_custom_frames_v2';
+const DHARMA_STORAGE_KEY = 'tien_ky_dao_dharma_idols_v2';
+const ARTIFACTS_STORAGE_KEY = 'tien_ky_dao_custom_artifacts_v2';
 
 export function loadCustomFrames(): CustomFrame[] {
-  if (memoryFrames) return memoryFrames;
-  if (typeof window === 'undefined') return DEFAULT_FRAMES;
+  if (typeof window === 'undefined') return DEFAULT_CUSTOM_FRAMES;
   try {
-    const raw = localStorage.getItem(FRAMES_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryFrames = parsed;
-        return parsed;
-      }
-    }
+    const raw = localStorage.getItem(FRAMES_STORAGE_KEY);
+    if (!raw) return DEFAULT_CUSTOM_FRAMES;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_CUSTOM_FRAMES;
+    const ids = new Set(parsed.map((f: CustomFrame) => f.id));
+    const missingPresets = DEFAULT_CUSTOM_FRAMES.filter((f) => !ids.has(f.id));
+    return [...parsed, ...missingPresets];
   } catch {
-    // fallback
+    return DEFAULT_CUSTOM_FRAMES;
   }
-  memoryFrames = DEFAULT_FRAMES;
-  return DEFAULT_FRAMES;
 }
 
 export function saveCustomFrames(frames: CustomFrame[]): void {
-  const stampedFrames = frames.map((f) => ({ ...f, updatedAt: Date.now() }));
-  memoryFrames = stampedFrames;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(FRAMES_KEY, JSON.stringify(stampedFrames));
-    // Asynchronously push to server cloud store for cross-device sync
-    fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'SYNC_FRAMES', frames: stampedFrames }),
-    }).catch(() => {});
+    localStorage.setItem(FRAMES_STORAGE_KEY, JSON.stringify(frames));
   } catch {
-    // fallback
+    // ignore
   }
 }
 
 export function loadDharmaIdols(): DharmaIdol[] {
-  if (memoryDharma) return memoryDharma;
   if (typeof window === 'undefined') return DEFAULT_DHARMA_IDOLS;
   try {
-    const raw = localStorage.getItem(DHARMA_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryDharma = parsed;
-        return parsed;
-      }
-    }
+    const raw = localStorage.getItem(DHARMA_STORAGE_KEY);
+    if (!raw) return DEFAULT_DHARMA_IDOLS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_DHARMA_IDOLS;
+    const ids = new Set(parsed.map((d: DharmaIdol) => d.id));
+    const missing = DEFAULT_DHARMA_IDOLS.filter((d) => !ids.has(d.id));
+    return [...parsed, ...missing];
   } catch {
-    // fallback
+    return DEFAULT_DHARMA_IDOLS;
   }
-  memoryDharma = DEFAULT_DHARMA_IDOLS;
-  return DEFAULT_DHARMA_IDOLS;
 }
 
 export function saveDharmaIdols(idols: DharmaIdol[]): void {
-  const stampedIdols = idols.map((d) => ({ ...d, updatedAt: Date.now() }));
-  memoryDharma = stampedIdols;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(DHARMA_KEY, JSON.stringify(stampedIdols));
-    // Asynchronously push to server cloud store
-    fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'SYNC_DHARMA', dharmaIdols: stampedIdols }),
-    }).catch(() => {});
+    localStorage.setItem(DHARMA_STORAGE_KEY, JSON.stringify(idols));
   } catch {
-    // fallback
+    // ignore
   }
 }
 
 export function loadCustomArtifacts(): CustomArtifact[] {
-  if (memoryArtifacts) return memoryArtifacts;
-  if (typeof window === 'undefined') return DEFAULT_ARTIFACTS;
+  if (typeof window === 'undefined') return DEFAULT_CUSTOM_ARTIFACTS;
   try {
-    const raw = localStorage.getItem(ARTIFACTS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryArtifacts = parsed;
-        return parsed;
-      }
-    }
+    const raw = localStorage.getItem(ARTIFACTS_STORAGE_KEY);
+    if (!raw) return DEFAULT_CUSTOM_ARTIFACTS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_CUSTOM_ARTIFACTS;
+    const ids = new Set(parsed.map((a: CustomArtifact) => a.id));
+    const missing = DEFAULT_CUSTOM_ARTIFACTS.filter((a) => !ids.has(a.id));
+    return [...parsed, ...missing];
   } catch {
-    // fallback
+    return DEFAULT_CUSTOM_ARTIFACTS;
   }
-  memoryArtifacts = DEFAULT_ARTIFACTS;
-  return DEFAULT_ARTIFACTS;
 }
 
 export function saveCustomArtifacts(artifacts: CustomArtifact[]): void {
-  const stampedArtifacts = artifacts.map((a) => ({ ...a, updatedAt: Date.now() }));
-  memoryArtifacts = stampedArtifacts;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(stampedArtifacts));
-    // Asynchronously push to server cloud store
-    fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'SYNC_ARTIFACTS', artifacts: stampedArtifacts }),
-    }).catch(() => {});
+    localStorage.setItem(ARTIFACTS_STORAGE_KEY, JSON.stringify(artifacts));
   } catch {
-    // fallback
+    // ignore
   }
 }
 
+export interface CustomTitle {
+  id: string;
+  name: string;
+  price: number;
+  color?: string;
+  textColor?: string;
+  bgGradient?: string;
+  badgeImageUrl?: string;
+  icon?: string;
+  description?: string;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+  minRealmLevel?: number;
+  unlockedAtRealm?: number;
+  inShop?: boolean;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+const TITLES_STORAGE_KEY = 'tien_ky_dao_custom_titles_v2';
+const DEFAULT_TITLES: CustomTitle[] = [
+  { id: 'title_celestial_master', name: 'Thần Thông Quảng Đại', price: 1500, color: '#ffd700', rarity: 'legendary', minRealmLevel: 6, unlockedAtRealm: 6 },
+  { id: 'title_sword_immortal', name: 'Nhất Kiếm Khuynh Thành', price: 1200, color: '#a855f7', rarity: 'epic', minRealmLevel: 4, unlockedAtRealm: 4 },
+  { id: 'title_lotus_sage', name: 'Bạch Liên Chân Nhân', price: 800, color: '#10b981', rarity: 'rare', minRealmLevel: 2, unlockedAtRealm: 2 },
+];
+
 export function loadCustomTitles(): CustomTitle[] {
-  if (memoryTitles) return memoryTitles;
-  if (typeof window === 'undefined') return DEFAULT_CUSTOM_TITLES;
+  if (typeof window === 'undefined') return DEFAULT_TITLES;
   try {
-    const raw = localStorage.getItem(TITLES_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        memoryTitles = parsed;
-        return parsed;
-      }
-    }
+    const raw = localStorage.getItem(TITLES_STORAGE_KEY);
+    if (!raw) return DEFAULT_TITLES;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_TITLES;
   } catch {
-    // fallback
+    return DEFAULT_TITLES;
   }
-  memoryTitles = DEFAULT_CUSTOM_TITLES;
-  return DEFAULT_CUSTOM_TITLES;
 }
 
 export function saveCustomTitles(titles: CustomTitle[]): void {
-  const stampedTitles = titles.map((t) => ({ ...t, updatedAt: Date.now() }));
-  memoryTitles = stampedTitles;
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(TITLES_KEY, JSON.stringify(stampedTitles));
-    // Asynchronously push to server cloud store
-    fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'SYNC_TITLES', titles: stampedTitles }),
-    }).catch(() => {});
+    localStorage.setItem(TITLES_STORAGE_KEY, JSON.stringify(titles));
   } catch {
-    // fallback
+    // ignore
   }
 }
 
-export function deleteCustomFrame(frameId: string): CustomFrame[] {
-  const current = loadCustomFrames();
-  const updated = current.filter((f) => f.id !== frameId);
-  memoryFrames = updated;
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(FRAMES_KEY, JSON.stringify(updated));
-      fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_FRAME', id: frameId, frames: updated }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
-  }
-  return updated;
+export function deleteCustomFrame(id: string): CustomFrame[] {
+  const frames = loadCustomFrames().filter((f) => f.id !== id);
+  saveCustomFrames(frames);
+  return frames;
 }
 
-export function deleteDharmaIdol(dharmaId: string): DharmaIdol[] {
-  const current = loadDharmaIdols();
-  const updated = current.filter((d) => d.id !== dharmaId);
-  memoryDharma = updated;
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(DHARMA_KEY, JSON.stringify(updated));
-      fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_DHARMA', id: dharmaId, dharmaIdols: updated }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
-  }
-  return updated;
+export function deleteDharmaIdol(id: string): DharmaIdol[] {
+  const idols = loadDharmaIdols().filter((d) => d.id !== id);
+  saveDharmaIdols(idols);
+  return idols;
 }
 
-export function deleteCustomArtifact(artifactId: string): CustomArtifact[] {
-  const current = loadCustomArtifacts();
-  const updated = current.filter((a) => a.id !== artifactId);
-  memoryArtifacts = updated;
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(updated));
-      fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_ARTIFACT', id: artifactId, artifacts: updated }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
-  }
-  return updated;
+export function deleteCustomArtifact(id: string): CustomArtifact[] {
+  const artifacts = loadCustomArtifacts().filter((a) => a.id !== id);
+  saveCustomArtifacts(artifacts);
+  return artifacts;
 }
 
-export function deleteCustomTitle(titleId: string): CustomTitle[] {
-  const current = loadCustomTitles();
-  const updated = current.filter((t) => t.id !== titleId);
-  memoryTitles = updated;
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(TITLES_KEY, JSON.stringify(updated));
-      fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DELETE_TITLE', id: titleId, titles: updated }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
-  }
-  return updated;
+export function deleteCustomTitle(id: string): CustomTitle[] {
+  const titles = loadCustomTitles().filter((t) => t.id !== id);
+  saveCustomTitles(titles);
+  return titles;
 }
 
-/**
- * Fetch latest items from cloud server and merge into local storage.
- * Used when app mounts on any device (phone, laptop, tablet).
- */
-export async function syncItemsFromCloud(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
+export async function syncItemsFromCloud(): Promise<void> {
   try {
     const res = await fetch('/api/sync');
-    if (!res.ok) return false;
+    if (!res.ok) return;
     const data = await res.json();
-    if (!data.success) return false;
-
-    // Merge custom frames
-    if (Array.isArray(data.customFrames) && data.customFrames.length > 0) {
-      const current = loadCustomFrames();
-      const map = new Map<string, CustomFrame>();
-      current.forEach((f) => map.set(f.id, f));
-      data.customFrames.forEach((f: CustomFrame) => {
-        const local = map.get(f.id);
-        if (!local) {
-          map.set(f.id, f);
-        } else {
-          const serverTime = f.updatedAt || f.createdAt || 0;
-          const localTime = local.updatedAt || local.createdAt || 0;
-          if (serverTime > localTime) {
-            map.set(f.id, f);
-          }
-        }
-      });
-      const merged = Array.from(map.values());
-      memoryFrames = merged;
-      localStorage.setItem(FRAMES_KEY, JSON.stringify(merged));
+    if (data.success) {
+      if (Array.isArray(data.customFrames) && data.customFrames.length > 0) {
+        saveCustomFrames(data.customFrames);
+      }
+      if (Array.isArray(data.dharmaIdols) && data.dharmaIdols.length > 0) {
+        saveDharmaIdols(data.dharmaIdols);
+      }
+      if (Array.isArray(data.customArtifacts) && data.customArtifacts.length > 0) {
+        saveCustomArtifacts(data.customArtifacts);
+      }
+      if (Array.isArray(data.customTitles) && data.customTitles.length > 0) {
+        saveCustomTitles(data.customTitles);
+      }
     }
-
-    // Merge dharma idols
-    if (Array.isArray(data.dharmaIdols) && data.dharmaIdols.length > 0) {
-      const current = loadDharmaIdols();
-      const map = new Map<string, DharmaIdol>();
-      current.forEach((d) => map.set(d.id, d));
-      data.dharmaIdols.forEach((d: DharmaIdol) => {
-        const local = map.get(d.id);
-        if (!local) {
-          map.set(d.id, d);
-        } else {
-          const serverTime = d.updatedAt || d.createdAt || 0;
-          const localTime = local.updatedAt || local.createdAt || 0;
-          if (serverTime > localTime) {
-            map.set(d.id, d);
-          }
-        }
-      });
-      const merged = Array.from(map.values());
-      memoryDharma = merged;
-      localStorage.setItem(DHARMA_KEY, JSON.stringify(merged));
-    }
-
-    // Merge artifacts
-    if (Array.isArray(data.customArtifacts) && data.customArtifacts.length > 0) {
-      const current = loadCustomArtifacts();
-      const map = new Map<string, CustomArtifact>();
-      current.forEach((a) => map.set(a.id, a));
-      data.customArtifacts.forEach((a: CustomArtifact) => {
-        const local = map.get(a.id);
-        if (!local) {
-          map.set(a.id, a);
-        } else {
-          const serverTime = a.updatedAt || a.createdAt || 0;
-          const localTime = local.updatedAt || local.createdAt || 0;
-          if (serverTime > localTime) {
-            map.set(a.id, a);
-          }
-        }
-      });
-      const merged = Array.from(map.values());
-      memoryArtifacts = merged;
-      localStorage.setItem(ARTIFACTS_KEY, JSON.stringify(merged));
-    }
-
-    // Merge titles
-    if (Array.isArray(data.customTitles) && data.customTitles.length > 0) {
-      const current = loadCustomTitles();
-      const map = new Map<string, CustomTitle>();
-      current.forEach((t) => map.set(t.id, t));
-      data.customTitles.forEach((t: CustomTitle) => {
-        const local = map.get(t.id);
-        if (!local) {
-          map.set(t.id, t);
-        } else {
-          const serverTime = t.updatedAt || t.createdAt || 0;
-          const localTime = local.updatedAt || local.createdAt || 0;
-          if (serverTime > localTime) {
-            map.set(t.id, t);
-          }
-        }
-      });
-      const merged = Array.from(map.values());
-      memoryTitles = merged;
-      localStorage.setItem(TITLES_KEY, JSON.stringify(merged));
-    }
-
-    return true;
-  } catch (err) {
-    console.warn('[Sync] Could not pull items from server cloud:', err);
-    return false;
+  } catch {
+    // ignore
   }
 }

@@ -40,6 +40,7 @@ interface NavbarProps {
   inGame?: boolean;
   onlineCount?: number;
   onOpenOnlineUsers?: () => void;
+  onOpenClearCache?: () => void;
 }
 
 export default function Navbar({
@@ -58,6 +59,7 @@ export default function Navbar({
   inGame = false,
   onlineCount,
   onOpenOnlineUsers,
+  onOpenClearCache,
 }: NavbarProps) {
   const [syncingCloud, setSyncingCloud] = useState(false);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -271,6 +273,18 @@ export default function Navbar({
             )}
           </button>
 
+          {/* Quick Clear Cache Button */}
+          {onOpenClearCache && (
+            <button
+              onClick={onOpenClearCache}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/70 text-teal-300 hover:text-white border border-teal-500/35 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              title="Thanh Lọc Tiên Khí • Xóa Bộ Nhớ Đệm (Clear Cache)"
+            >
+              <Sparkles className="w-4 h-4 text-teal-300 animate-pulse" />
+              <span className="hidden xl:inline">Xóa Cache</span>
+            </button>
+          )}
+
           {/* AVATAR WITH DROPDOWN MENU */}
           <div className="relative" ref={avatarMenuRef}>
             <button
@@ -470,6 +484,21 @@ export default function Navbar({
                         </span>
                       </button>
                     </>
+                  )}
+
+                  {/* Xóa Bộ Nhớ Đệm (Clear Cache) */}
+                  {onOpenClearCache && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAvatarMenu(false);
+                        onOpenClearCache();
+                      }}
+                      className="w-full px-3 py-2 rounded-xl hover:bg-emerald-900/50 flex items-center gap-2.5 text-teal-300 transition-colors text-left cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 text-teal-400" />
+                      <span className="font-xianxia text-sm">Xóa Bộ Nhớ Đệm (Clear Cache)</span>
+                    </button>
                   )}
 
                   {/* Đăng Xuất / Đổi Tài Khoản */}

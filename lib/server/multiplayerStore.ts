@@ -11,6 +11,7 @@ export interface ChatMessage {
   realm: string;
   title: string;
   avatarUrl: string;
+  frameId?: string;
   message: string;
   time: string;
   timestamp: number;
@@ -41,6 +42,32 @@ export interface OnlinePresenceRecord {
   roomId?: string;
 }
 
+export type RealtimeEvent =
+  | { type: 'chat'; data: { message: ChatMessage; chatMessages: ChatMessage[] } }
+  | { type: 'lobby_sync'; data: { onlineUsers: UserAccount[]; rooms: GameRoom[]; chatMessages: ChatMessage[] } }
+  | { type: 'room_update'; data: { roomId: string; state: ServerGameRoomState } }
+  | { type: 'room_deleted'; data: { roomId: string } };
+
+type EventListener = (event: RealtimeEvent) => void;
+const eventSubscribers = new Set<EventListener>();
+
+export function subscribeRealtimeEvents(listener: EventListener): () => void {
+  eventSubscribers.add(listener);
+  return () => {
+    eventSubscribers.delete(listener);
+  };
+}
+
+export function broadcastRealtimeEvent(event: RealtimeEvent): void {
+  eventSubscribers.forEach((fn) => {
+    try {
+      fn(event);
+    } catch {
+      // ignore
+    }
+  });
+}
+
 // In-memory runtime state for real-time multiplayer
 const presenceMap = new Map<string, OnlinePresenceRecord>();
 const roomMap = new Map<string, ServerGameRoomState>();
@@ -51,7 +78,8 @@ let chatMessages: ChatMessage[] = [
     realm: 'Vô Thượng',
     title: 'Thiên Đạo',
     avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-    message: 'Chào mừng các vị đạo hữu giá lâm Tiên Kỳ Đạo! Toàn bộ kỳ sĩ trực tuyến có thể đàm đạo và luận kỳ cùng nhau.',
+    frameId: 'frame_celestial_gold',
+    message: 'Chào mừng các vị đạo hữu giá lâm Tiên Kỳ Đạo! Toàn bộ kỳ sĩ trực tuyến có thể đàm đạo và luận kỳ cùng nhau trong thời gian thực.',
     time: 'Vừa xong',
     timestamp: Date.now() - 60000,
     isSystem: true,
@@ -122,17 +150,6 @@ export function recordHeartbeat(
     status,
     roomId,
   });
-
-  // Also sync to cloud store in background
-  try {
-    upsertAccountInServer({
-      ...sanitized,
-      isOnline: true,
-      lastActive: now,
-    });
-  } catch {
-    // ignore
-  }
 }
 
 // Get all users currently online (ping within last 18 seconds)
@@ -160,6 +177,7 @@ export function addWorldChatMessage(msg: {
   realm: string;
   title: string;
   avatarUrl: string;
+  frameId?: string;
   message: string;
   isSystem?: boolean;
 }): ChatMessage {
@@ -170,6 +188,7 @@ export function addWorldChatMessage(msg: {
     realm: msg.realm,
     title: msg.title,
     avatarUrl: msg.avatarUrl,
+    frameId: msg.frameId || '',
     message: msg.message,
     time: 'Vừa xong',
     timestamp: now,
@@ -181,6 +200,16 @@ export function addWorldChatMessage(msg: {
     chatMessages = chatMessages.slice(-100);
   }
   persistChat();
+
+  // Phát sóng tin nhắn thời gian thực lập tức tới toàn bộ người dùng
+  broadcastRealtimeEvent({
+    type: 'chat',
+    data: {
+      message: newMsg,
+      chatMessages: getWorldChatMessages(),
+    },
+  });
+
   return newMsg;
 }
 
@@ -230,6 +259,21 @@ export function createServerRoom(room: GameRoom): ServerGameRoomState {
   };
 
   roomMap.set(room.id, state);
+
+  // Phát sóng phòng mới thời gian thực tới sảnh và phòng chơi
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId: room.id, state },
+  });
+  broadcastRealtimeEvent({
+    type: 'lobby_sync',
+    data: {
+      onlineUsers: getActiveOnlineUsers(),
+      rooms: getAllServerRooms(),
+      chatMessages: getWorldChatMessages(),
+    },
+  });
+
   return state;
 }
 
@@ -263,6 +307,21 @@ export function joinServerRoom(roomId: string, player: GamePlayer): ServerGameRo
 
   state.version += 1;
   state.lastActive = Date.now();
+
+  // Phát sóng cập nhật trạng thái phòng tức thì
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+  broadcastRealtimeEvent({
+    type: 'lobby_sync',
+    data: {
+      onlineUsers: getActiveOnlineUsers(),
+      rooms: getAllServerRooms(),
+      chatMessages: getWorldChatMessages(),
+    },
+  });
+
   return state;
 }
 
@@ -273,6 +332,12 @@ export function startServerGame(roomId: string): ServerGameRoomState | null {
   state.room.status = 'playing';
   state.version += 1;
   state.lastActive = Date.now();
+
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+
   return state;
 }
 
@@ -336,6 +401,12 @@ export function makeServerMove(
   state.lastMoveTimestamp = now;
   state.lastActive = now;
 
+  // Phát sóng nước đi tức thì (< 30ms) tới đối thủ
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+
   return state;
 }
 
@@ -349,6 +420,12 @@ export function resignServerGame(roomId: string, resigningSide: Side): ServerGam
   state.room.status = 'ended';
   state.version += 1;
   state.lastActive = Date.now();
+
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+
   return state;
 }
 
@@ -359,6 +436,12 @@ export function offerServerDraw(roomId: string, side: Side): ServerGameRoomState
   state.drawOfferFrom = side;
   state.version += 1;
   state.lastActive = Date.now();
+
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+
   return state;
 }
 
@@ -373,6 +456,12 @@ export function acceptServerDraw(roomId: string): ServerGameRoomState | null {
   state.drawOfferFrom = undefined;
   state.version += 1;
   state.lastActive = Date.now();
+
+  broadcastRealtimeEvent({
+    type: 'room_update',
+    data: { roomId, state },
+  });
+
   return state;
 }
 
@@ -390,7 +479,24 @@ export function leaveServerRoom(roomId: string, userId: string): void {
   // If both players left, remove room
   if (!state.room.players.red && !state.room.players.black) {
     roomMap.delete(roomId);
+    broadcastRealtimeEvent({
+      type: 'room_deleted',
+      data: { roomId },
+    });
   } else {
     state.version += 1;
+    broadcastRealtimeEvent({
+      type: 'room_update',
+      data: { roomId, state },
+    });
   }
+
+  broadcastRealtimeEvent({
+    type: 'lobby_sync',
+    data: {
+      onlineUsers: getActiveOnlineUsers(),
+      rooms: getAllServerRooms(),
+      chatMessages: getWorldChatMessages(),
+    },
+  });
 }

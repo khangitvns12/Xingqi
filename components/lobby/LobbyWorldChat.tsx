@@ -5,6 +5,7 @@ import { MessageSquare, Users, Eye, Send, Swords } from 'lucide-react';
 import { UserAccount } from '../../lib/storage/userStore';
 import { getRealmByLevel } from '../../lib/cultivation/realms';
 import { AI_CULTIVATOR_RIVALS, AiCultivator } from '../../lib/xiangqi/ai';
+import AvatarWithFrame from '../AvatarWithFrame';
 
 export interface ChatMessage {
   id: string;
@@ -12,6 +13,7 @@ export interface ChatMessage {
   realm: string;
   title: string;
   avatarUrl: string;
+  frameId?: string;
   message: string;
   time: string;
   isSystem?: boolean;
@@ -90,13 +92,21 @@ export default function LobbyWorldChat({
             {messages.map((m) => (
               <div key={m.id} className="space-y-0.5">
                 <div className="flex items-center gap-1.5">
+                  <div className="shrink-0">
+                    <AvatarWithFrame
+                      avatarUrl={m.avatarUrl}
+                      daoName={m.sender}
+                      realmLevel={1}
+                      frameId={m.frameId}
+                      size="xs"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => onInspectBySender(m.sender, m.avatarUrl, m.realm, m.title)}
                     className="font-semibold text-teal-300 hover:text-white text-[11px] truncate max-w-[130px] hover:underline cursor-pointer flex items-center gap-1 text-left font-xianxia"
                     title="Nhấp để xem hồ sơ của đạo hữu này"
                   >
-                    <Eye className="w-2.5 h-2.5 text-emerald-400/80" />
                     <span>{m.sender}</span>
                   </button>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 font-xianxia">
@@ -156,8 +166,14 @@ export default function LobbyWorldChat({
                 className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 flex items-center justify-between gap-2 transition-all"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 shrink-0">
-                    <img src={cult.avatarUrl} alt={cult.daoName} className="w-full h-full object-cover" />
+                  <div className="shrink-0">
+                    <AvatarWithFrame
+                      avatarUrl={cult.avatarUrl}
+                      daoName={cult.daoName}
+                      realmLevel={cult.realmLevel}
+                      frameId={cult.selectedFrameId}
+                      size="sm"
+                    />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -194,8 +210,14 @@ export default function LobbyWorldChat({
               className="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-amber-500/40 flex items-center justify-between gap-2 transition-all"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-700 shrink-0">
-                  <img src={rival.avatarUrl} alt={rival.name} className="w-full h-full object-cover" />
+                <div className="shrink-0">
+                  <AvatarWithFrame
+                    avatarUrl={rival.avatarUrl}
+                    daoName={rival.name}
+                    realmLevel={rival.realmLevel}
+                    frameId={rival.frameColor ? 'frame_emerald_lotus' : undefined}
+                    size="sm"
+                  />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">

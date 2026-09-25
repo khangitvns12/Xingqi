@@ -179,6 +179,9 @@ export default function LobbyView({
       selectedAvatarId: 'av_default',
       unlockedTitleIds: ['t1', 't3'],
       unlockedAvatarIds: ['av_default'],
+      unlockedFrameIds: [],
+      lastActive: Date.now(),
+      updatedAt: Date.now(),
       createdAt: Date.now(),
       stats: { wins: 28, losses: 14, draws: 3, totalMatches: 45, winStreak: 3, maxWinStreak: 5, highestElo: 1520 },
       isOnline: true,
@@ -368,13 +371,13 @@ export default function LobbyView({
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-emerald-300/70">Tu Vi Cảnh Giới:</span>
                 <span className="font-mono text-teal-300 font-semibold">
-                  {user.exp} / {userRealm.requiredExp}
+                  {user.exp} / {userRealm.expRequired}
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-[#02110f] overflow-hidden p-0.5 border border-emerald-500/30">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-400 to-white transition-all duration-500 shadow-[0_0_8px_#10b981]"
-                  style={{ width: `${Math.min(100, Math.round((user.exp / userRealm.requiredExp) * 100))}%` }}
+                  style={{ width: `${Math.min(100, Math.round((user.exp / (userRealm.expRequired || 1)) * 100))}%` }}
                 />
               </div>
             </div>

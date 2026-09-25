@@ -9,7 +9,7 @@ interface AvatarWithFrameProps {
   daoName?: string;
   realmLevel?: number;
   frameId?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   showOnlineDot?: boolean;
   isOnline?: boolean;
   className?: string;
@@ -17,6 +17,7 @@ interface AvatarWithFrameProps {
 
 // Strictly calibrated dimensions to ensure exact symmetry and alignment at every viewport
 const PIXEL_SIZES: Record<string, { px: number; containerClass: string; dotClass: string }> = {
+  xs: { px: 28, containerClass: 'w-7 h-7', dotClass: 'w-2 h-2 bottom-0 right-0' },
   sm: { px: 36, containerClass: 'w-9 h-9', dotClass: 'w-2.5 h-2.5 bottom-0 right-0' },
   md: { px: 48, containerClass: 'w-12 h-12', dotClass: 'w-3 h-3 bottom-0.5 right-0.5' },
   lg: { px: 64, containerClass: 'w-16 h-16', dotClass: 'w-3.5 h-3.5 bottom-0.5 right-0.5' },

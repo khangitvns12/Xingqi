@@ -1,0 +1,23 @@
+[
+  {
+    "id": "msg_sys_init",
+    "sender": "Hệ Thống Tiên Giới",
+    "realm": "Vô Thượng",
+    "title": "Thiên Đạo",
+    "avatarUrl": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+    "message": "Chào mừng các vị đạo hữu giá lâm Tiên Kỳ Đạo! Toàn bộ kỳ sĩ trực tuyến có thể đàm đạo và luận kỳ cùng nhau.",
+    "time": "Vừa xong",
+    "timestamp": 1790267566573,
+    "isSystem": true
+  },
+  {
+    "id": "msg_1790267631522_kenq",
+    "sender": "Đạo Hữu A",
+    "realm": "Luyện Khí",
+    "title": "Kỳ Đạo Đạo Đồng",
+    "avatarUrl": "",
+    "message": "Xin chào các vị đạo hữu!",
+    "time": "Vừa xong",
+    "timestamp": 1790267631522
+  }
+]

@@ -6,7 +6,8 @@ import { GamePlayer, GameRoom, Side } from '../lib/xiangqi/types';
 import { UserAccount } from '../lib/storage/userStore';
 import { getRealmByLevel } from '../lib/cultivation/realms';
 import { AI_CULTIVATOR_RIVALS } from '../lib/xiangqi/ai';
-import { syncRoomState, startRoomOnServer } from '../lib/multiplayer/multiplayerClient';
+import { syncRoomState, startRoomOnServer, subscribeRealtimeStream } from '../lib/multiplayer/multiplayerClient';
+import AvatarWithFrame from './AvatarWithFrame';
 
 interface WaitingRoomViewProps {
   room: GameRoom;
@@ -37,7 +38,21 @@ export default function WaitingRoomView({
   const [chatInput, setChatInput] = useState('');
   const [isReady, setIsReady] = useState(false);
 
-  // Poll room state in real-time from server
+  // Real-time SSE stream subscription for instant room updates (join, leave, swap, start)
+  useEffect(() => {
+    const unsub = subscribeRealtimeStream((event) => {
+      if (event.type === 'room_update' && event.data.roomId === room.id) {
+        setLiveRoom(event.data.state.room);
+        if (event.data.state.room.status === 'playing') {
+          onStartGame();
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [room.id, onStartGame]);
+
+  // Fallback poll room state periodically from server
   useEffect(() => {
     let active = true;
     const poll = async () => {
@@ -51,7 +66,7 @@ export default function WaitingRoomView({
       }
     };
     poll();
-    const timer = setInterval(poll, 1200);
+    const timer = setInterval(poll, 1500);
     return () => {
       active = false;
       clearInterval(timer);
@@ -146,15 +161,15 @@ export default function WaitingRoomView({
           {redPlayer ? (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                {/* Glowing Avatar */}
-                <div
-                  className="w-16 h-16 rounded-full overflow-hidden border-2 transition-transform hover:scale-105"
-                  style={{
-                    borderColor: redPlayer.frameColor,
-                    boxShadow: `0 0 25px ${redPlayer.frameColor}80`,
-                  }}
-                >
-                  <img src={redPlayer.avatarUrl} alt={redPlayer.name} className="w-full h-full object-cover" />
+                {/* Glowing Avatar With Frame */}
+                <div className="shrink-0 transition-transform hover:scale-105">
+                  <AvatarWithFrame
+                    avatarUrl={redPlayer.avatarUrl}
+                    daoName={redPlayer.name}
+                    realmLevel={redPlayer.realmLevel}
+                    frameId={redPlayer.selectedFrameId}
+                    size="lg"
+                  />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -204,15 +219,15 @@ export default function WaitingRoomView({
           {blackPlayer ? (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                {/* Glowing Avatar */}
-                <div
-                  className="w-16 h-16 rounded-full overflow-hidden border-2 transition-transform hover:scale-105"
-                  style={{
-                    borderColor: blackPlayer.frameColor,
-                    boxShadow: `0 0 25px ${blackPlayer.frameColor}80`,
-                  }}
-                >
-                  <img src={blackPlayer.avatarUrl} alt={blackPlayer.name} className="w-full h-full object-cover" />
+                {/* Glowing Avatar With Frame */}
+                <div className="shrink-0 transition-transform hover:scale-105">
+                  <AvatarWithFrame
+                    avatarUrl={blackPlayer.avatarUrl}
+                    daoName={blackPlayer.name}
+                    realmLevel={blackPlayer.realmLevel}
+                    frameId={blackPlayer.selectedFrameId}
+                    size="lg"
+                  />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white flex items-center gap-1.5">

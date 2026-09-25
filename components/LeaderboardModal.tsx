@@ -2,6 +2,7 @@
 
 import { Trophy, Crown, Medal, User } from 'lucide-react';
 import { generateLeaderboard, LeaderboardEntry, UserAccount } from '../lib/storage/userStore';
+import AvatarWithFrame from './AvatarWithFrame';
 
 interface LeaderboardModalProps {
   currentUser: UserAccount;
@@ -20,6 +21,7 @@ export default function LeaderboardModal({ currentUser, onClose, onViewProfile }
       daoName: entry.name,
       sect: entry.sect,
       avatarUrl: entry.avatarUrl,
+      selectedFrameId: entry.selectedFrameId || '',
       elo: entry.elo,
       realmLevel: entry.realmLevel,
       exp: entry.realmLevel * 1000,
@@ -29,6 +31,9 @@ export default function LeaderboardModal({ currentUser, onClose, onViewProfile }
       selectedAvatarId: 'av_' + Math.min(entry.realmLevel, 10),
       unlockedTitleIds: ['title_' + Math.min(entry.realmLevel, 10)],
       unlockedAvatarIds: ['av_' + Math.min(entry.realmLevel, 10)],
+      unlockedFrameIds: entry.selectedFrameId ? [entry.selectedFrameId] : [],
+      lastActive: 1720000000000,
+      updatedAt: 1720000000000,
       stats: {
         totalMatches: Math.round(entry.wins / (entry.winRate / 100 || 0.8)),
         wins: entry.wins,
@@ -115,9 +120,15 @@ export default function LeaderboardModal({ currentUser, onClose, onViewProfile }
                     )}
                   </div>
 
-                  {/* Avatar */}
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-emerald-500/40 flex-shrink-0 group-hover:border-teal-300 transition-colors">
-                    <img src={entry.avatarUrl} alt={entry.name} className="w-full h-full object-cover" />
+                  {/* Avatar With Frame */}
+                  <div className="flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <AvatarWithFrame
+                      avatarUrl={entry.avatarUrl}
+                      daoName={entry.name}
+                      realmLevel={entry.realmLevel}
+                      frameId={entry.selectedFrameId || entry.account?.selectedFrameId}
+                      size="sm"
+                    />
                   </div>
 
                   <div className="min-w-0">

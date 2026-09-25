@@ -1,155 +1,184 @@
-import { BoardState, Move, Piece, PieceType, Position, Side, SkillFxType } from './types';
+import { BoardState, Piece, PieceType, Position, Side, SkillFxType } from './types';
 
 export const INITIAL_BOARD: BoardState = [
-  // Row 0: Black baseline
+  // Row 0: Black back rank
   [
-    { side: 'black', type: 'r', id: 'b_r1' },
-    { side: 'black', type: 'n', id: 'b_n1' },
-    { side: 'black', type: 'b', id: 'b_b1' },
-    { side: 'black', type: 'a', id: 'b_a1' },
-    { side: 'black', type: 'k', id: 'b_k' },
-    { side: 'black', type: 'a', id: 'b_a2' },
-    { side: 'black', type: 'b', id: 'b_b2' },
-    { side: 'black', type: 'n', id: 'b_n2' },
-    { side: 'black', type: 'r', id: 'b_r2' },
+    { type: 'r', side: 'black' },
+    { type: 'n', side: 'black' },
+    { type: 'b', side: 'black' },
+    { type: 'a', side: 'black' },
+    { type: 'k', side: 'black' },
+    { type: 'a', side: 'black' },
+    { type: 'b', side: 'black' },
+    { type: 'n', side: 'black' },
+    { type: 'r', side: 'black' },
   ],
-  // Row 1: Empty
-  Array(9).fill(null),
-  // Row 2: Black Cannons
+  // Row 1
+  [null, null, null, null, null, null, null, null, null],
+  // Row 2: Black cannons
   [
     null,
-    { side: 'black', type: 'c', id: 'b_c1' },
+    { type: 'c', side: 'black' },
     null,
     null,
     null,
     null,
     null,
-    { side: 'black', type: 'c', id: 'b_c2' },
-    null,
-  ],
-  // Row 3: Black Pawns
-  [
-    { side: 'black', type: 'p', id: 'b_p1' },
-    null,
-    { side: 'black', type: 'p', id: 'b_p2' },
-    null,
-    { side: 'black', type: 'p', id: 'b_p3' },
-    null,
-    { side: 'black', type: 'p', id: 'b_p4' },
-    null,
-    { side: 'black', type: 'p', id: 'b_p5' },
-  ],
-  // Row 4: Empty (River Black side)
-  Array(9).fill(null),
-  // Row 5: Empty (River Red side)
-  Array(9).fill(null),
-  // Row 6: Red Pawns
-  [
-    { side: 'red', type: 'p', id: 'r_p1' },
-    null,
-    { side: 'red', type: 'p', id: 'r_p2' },
-    null,
-    { side: 'red', type: 'p', id: 'r_p3' },
-    null,
-    { side: 'red', type: 'p', id: 'r_p4' },
-    null,
-    { side: 'red', type: 'p', id: 'r_p5' },
-  ],
-  // Row 7: Red Cannons
-  [
-    null,
-    { side: 'red', type: 'c', id: 'r_c1' },
-    null,
-    null,
-    null,
-    null,
-    null,
-    { side: 'red', type: 'c', id: 'r_c2' },
+    { type: 'c', side: 'black' },
     null,
   ],
-  // Row 8: Empty
-  Array(9).fill(null),
-  // Row 9: Red baseline
+  // Row 3: Black pawns
   [
-    { side: 'red', type: 'r', id: 'r_r1' },
-    { side: 'red', type: 'n', id: 'r_n1' },
-    { side: 'red', type: 'b', id: 'r_b1' },
-    { side: 'red', type: 'a', id: 'r_a1' },
-    { side: 'red', type: 'k', id: 'r_k' },
-    { side: 'red', type: 'a', id: 'r_a2' },
-    { side: 'red', type: 'b', id: 'r_b2' },
-    { side: 'red', type: 'n', id: 'r_n2' },
-    { side: 'red', type: 'r', id: 'r_r2' },
+    { type: 'p', side: 'black' },
+    null,
+    { type: 'p', side: 'black' },
+    null,
+    { type: 'p', side: 'black' },
+    null,
+    { type: 'p', side: 'black' },
+    null,
+    { type: 'p', side: 'black' },
+  ],
+  // Row 4
+  [null, null, null, null, null, null, null, null, null],
+  // Row 5
+  [null, null, null, null, null, null, null, null, null],
+  // Row 6: Red pawns
+  [
+    { type: 'p', side: 'red' },
+    null,
+    { type: 'p', side: 'red' },
+    null,
+    { type: 'p', side: 'red' },
+    null,
+    { type: 'p', side: 'red' },
+    null,
+    { type: 'p', side: 'red' },
+  ],
+  // Row 7: Red cannons
+  [
+    null,
+    { type: 'c', side: 'red' },
+    null,
+    null,
+    null,
+    null,
+    null,
+    { type: 'c', side: 'red' },
+    null,
+  ],
+  // Row 8
+  [null, null, null, null, null, null, null, null, null],
+  // Row 9: Red back rank
+  [
+    { type: 'r', side: 'red' },
+    { type: 'n', side: 'red' },
+    { type: 'b', side: 'red' },
+    { type: 'a', side: 'red' },
+    { type: 'k', side: 'red' },
+    { type: 'a', side: 'red' },
+    { type: 'b', side: 'red' },
+    { type: 'n', side: 'red' },
+    { type: 'r', side: 'red' },
   ],
 ];
 
 export function cloneBoard(board: BoardState): BoardState {
-  return board.map((row) => row.map((p) => (p ? { ...p } : null)));
+  return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
 }
 
-export function isInsideBoard(r: number, c: number): boolean {
-  return r >= 0 && r <= 9 && c >= 0 && c <= 8;
-}
+export function getPieceCharVi(typeOrPiece: PieceType | Piece, side?: Side): string {
+  const type: PieceType = typeof typeOrPiece === 'string' ? typeOrPiece : typeOrPiece.type;
+  const s: Side = typeof typeOrPiece === 'string' ? (side || 'red') : typeOrPiece.side;
 
-export function isInsidePalace(r: number, c: number, side: Side): boolean {
-  if (c < 3 || c > 5) return false;
-  if (side === 'black') {
-    return r >= 0 && r <= 2;
+  if (s === 'red') {
+    switch (type) {
+      case 'k': return 'TƯỚNG';
+      case 'a': return 'SĨ';
+      case 'b': return 'TƯỢNG';
+      case 'n': return 'MÃ';
+      case 'r': return 'XE';
+      case 'c': return 'PHÁO';
+      case 'p': return 'BINH';
+    }
   } else {
-    return r >= 7 && r <= 9;
-  }
-}
-
-export function findKingPosition(board: BoardState, side: Side): Position | null {
-  for (let r = 0; r < 10; r++) {
-    for (let c = 0; c < 9; c++) {
-      const piece = board[r][c];
-      if (piece && piece.side === side && piece.type === 'k') {
-        return { r, c };
-      }
+    switch (type) {
+      case 'k': return 'TƯỚNG';
+      case 'a': return 'SĨ';
+      case 'b': return 'VOI';
+      case 'n': return 'MÃ';
+      case 'r': return 'XE';
+      case 'c': return 'PHÁO';
+      case 'p': return 'TỐT';
     }
   }
-  return null;
 }
 
-// Flying general rule: King cannot face King directly on the same column without intervening piece
-export function areKingsFacing(board: BoardState): boolean {
-  const redKing = findKingPosition(board, 'red');
-  const blackKing = findKingPosition(board, 'black');
-  if (!redKing || !blackKing) return false;
-  if (redKing.c !== blackKing.c) return false;
-
-  const col = redKing.c;
-  const startR = Math.min(redKing.r, blackKing.r) + 1;
-  const endR = Math.max(redKing.r, blackKing.r);
-
-  for (let r = startR; r < endR; r++) {
-    if (board[r][col] !== null) {
-      return false; // has intervening piece
-    }
+export function getPieceNameVi(typeOrPiece: PieceType | Piece): string {
+  const type: PieceType = typeof typeOrPiece === 'string' ? typeOrPiece : typeOrPiece.type;
+  switch (type) {
+    case 'k': return 'Tướng';
+    case 'a': return 'Sĩ';
+    case 'b': return 'Tượng';
+    case 'n': return 'Mã';
+    case 'r': return 'Xe';
+    case 'c': return 'Pháo';
+    case 'p': return 'Binh/Tốt';
   }
-  return true; // no piece in between!
 }
 
-export function getPseudoMoves(board: BoardState, r: number, c: number): Position[] {
+export function getSkillTypeForPiece(typeOrPiece: PieceType | Piece): SkillFxType {
+  const type: PieceType = typeof typeOrPiece === 'string' ? typeOrPiece : typeOrPiece.type;
+  switch (type) {
+    case 'r': return 'thunder';
+    case 'c': return 'fire';
+    case 'n': return 'sword';
+    case 'b': return 'shield';
+    case 'a': return 'tai-chi';
+    case 'k': return 'holy';
+    case 'p': return 'slash';
+  }
+}
+
+export function getSkillNameVi(type: SkillFxType): string {
+  switch (type) {
+    case 'thunder': return 'Cửu Thiên Lôi Đình Trảm';
+    case 'fire': return 'Hồng Mông Liệt Hỏa Oanh';
+    case 'frost': return 'Băng Hà Tuyệt Sát Kiếm';
+    case 'holy': return 'Bát Quái Càn Khôn Chưởng';
+    case 'burst': return 'Kỳ Đạo Bạo Liệt Kích';
+    case 'slash': return 'Phá Không Trảm';
+    case 'sword': return 'Vạn Kiếm Quy Tông';
+    case 'tai-chi': return 'Thái Cực Bát Quái Trận';
+    case 'shield': return 'Hộ Thể Kim Chung Tráo';
+  }
+}
+
+function isInsidePalace(r: number, c: number, side: Side): boolean {
+  if (c < 3 || c > 5) return false;
+  if (side === 'red') return r >= 7 && r <= 9;
+  return r >= 0 && r <= 2;
+}
+
+// Pseudo legal moves without considering checks
+function getPseudoLegalMoves(board: BoardState, r: number, c: number): Position[] {
   const piece = board[r][c];
   if (!piece) return [];
-
   const moves: Position[] = [];
   const side = piece.side;
 
   switch (piece.type) {
     case 'k': {
-      // King: 1 step orthogonal in palace
+      // General moves 1 step orthogonally inside palace
       const dirs = [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
+        { r: -1, c: 0 },
+        { r: 1, c: 0 },
+        { r: 0, c: -1 },
+        { r: 0, c: 1 },
       ];
-      for (const [dr, dc] of dirs) {
-        const nr = r + dr;
-        const nc = c + dc;
+      for (const d of dirs) {
+        const nr = r + d.r;
+        const nc = c + d.c;
         if (isInsidePalace(nr, nc, side)) {
           const target = board[nr][nc];
           if (!target || target.side !== side) {
@@ -161,16 +190,16 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
     }
 
     case 'a': {
-      // Advisor: 1 step diagonal in palace
+      // Advisor moves 1 step diagonally inside palace
       const dirs = [
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
+        { r: -1, c: -1 },
+        { r: -1, c: 1 },
+        { r: 1, c: -1 },
+        { r: 1, c: 1 },
       ];
-      for (const [dr, dc] of dirs) {
-        const nr = r + dr;
-        const nc = c + dc;
+      for (const d of dirs) {
+        const nr = r + d.r;
+        const nc = c + d.c;
         if (isInsidePalace(nr, nc, side)) {
           const target = board[nr][nc];
           if (!target || target.side !== side) {
@@ -182,28 +211,28 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
     }
 
     case 'b': {
-      // Elephant: 2 steps diagonal, cannot cross river, eye cannot be blocked
-      const dirs = [
-        [-2, -2],
-        [-2, 2],
-        [2, -2],
-        [2, 2],
+      // Elephant moves 2 steps diagonally, cannot cross river, eye cannot be blocked
+      const steps = [
+        { r: -2, c: -2, eyeR: -1, eyeC: -1 },
+        { r: -2, c: 2, eyeR: -1, eyeC: 1 },
+        { r: 2, c: -2, eyeR: 1, eyeC: -1 },
+        { r: 2, c: 2, eyeR: 1, eyeC: 1 },
       ];
-      for (const [dr, dc] of dirs) {
-        const nr = r + dr;
-        const nc = c + dc;
-        // Check river constraint
-        if (side === 'red' && nr < 5) continue;
-        if (side === 'black' && nr > 4) continue;
+      for (const s of steps) {
+        const nr = r + s.r;
+        const nc = c + s.c;
+        const eyeR = r + s.eyeR;
+        const eyeC = c + s.eyeC;
 
-        if (isInsideBoard(nr, nc)) {
-          // Check eye (blocker at r + dr/2, c + dc/2)
-          const eyeR = r + dr / 2;
-          const eyeC = c + dc / 2;
-          if (board[eyeR][eyeC] === null) {
-            const target = board[nr][nc];
-            if (!target || target.side !== side) {
-              moves.push({ r: nr, c: nc });
+        if (nc >= 0 && nc <= 8) {
+          // River constraint: red stays rows 5..9, black stays rows 0..4
+          const withinTerritory = side === 'red' ? nr >= 5 && nr <= 9 : nr >= 0 && nr <= 4;
+          if (withinTerritory) {
+            if (!board[eyeR][eyeC]) {
+              const target = board[nr][nc];
+              if (!target || target.side !== side) {
+                moves.push({ r: nr, c: nc });
+              }
             }
           }
         }
@@ -212,26 +241,24 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
     }
 
     case 'n': {
-      // Horse: 8 possible jumps, blocked if leg is blocked
-      const horseSteps = [
-        { dr: -2, dc: -1, legR: -1, legC: 0 },
-        { dr: -2, dc: 1, legR: -1, legC: 0 },
-        { dr: 2, dc: -1, legR: 1, legC: 0 },
-        { dr: 2, dc: 1, legR: 1, legC: 0 },
-        { dr: -1, dc: -2, legR: 0, legC: -1 },
-        { dr: 1, dc: -2, legR: 0, legC: -1 },
-        { dr: -1, dc: 2, legR: 0, legC: 1 },
-        { dr: 1, dc: 2, legR: 0, legC: 1 },
+      // Horse moves L-shape, foot cannot be hobbled
+      const steps = [
+        { r: -2, c: -1, hobbleR: -1, hobbleC: 0 },
+        { r: -2, c: 1, hobbleR: -1, hobbleC: 0 },
+        { r: 2, c: -1, hobbleR: 1, hobbleC: 0 },
+        { r: 2, c: 1, hobbleR: 1, hobbleC: 0 },
+        { r: -1, c: -2, hobbleR: 0, hobbleC: -1 },
+        { r: 1, c: -2, hobbleR: 0, hobbleC: -1 },
+        { r: -1, c: 2, hobbleR: 0, hobbleC: 1 },
+        { r: 1, c: 2, hobbleR: 0, hobbleC: 1 },
       ];
-
-      for (const step of horseSteps) {
-        const nr = r + step.dr;
-        const nc = c + step.dc;
-        if (isInsideBoard(nr, nc)) {
-          const legPosR = r + step.legR;
-          const legPosC = c + step.legC;
-          // Leg must be empty
-          if (board[legPosR][legPosC] === null) {
+      for (const s of steps) {
+        const nr = r + s.r;
+        const nc = c + s.c;
+        if (nr >= 0 && nr <= 9 && nc >= 0 && nc <= 8) {
+          const hr = r + s.hobbleR;
+          const hc = c + s.hobbleC;
+          if (!board[hr][hc]) {
             const target = board[nr][nc];
             if (!target || target.side !== side) {
               moves.push({ r: nr, c: nc });
@@ -243,19 +270,17 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
     }
 
     case 'r': {
-      // Chariot: orthogonal any distance until blocked
+      // Chariot moves orthogonally any squares
       const dirs = [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
+        { r: -1, c: 0 },
+        { r: 1, c: 0 },
+        { r: 0, c: -1 },
+        { r: 0, c: 1 },
       ];
-      for (const [dr, dc] of dirs) {
-        let step = 1;
-        while (true) {
-          const nr = r + dr * step;
-          const nc = c + dc * step;
-          if (!isInsideBoard(nr, nc)) break;
+      for (const d of dirs) {
+        let nr = r + d.r;
+        let nc = c + d.c;
+        while (nr >= 0 && nr <= 9 && nc >= 0 && nc <= 8) {
           const target = board[nr][nc];
           if (!target) {
             moves.push({ r: nr, c: nc });
@@ -263,92 +288,71 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
             if (target.side !== side) {
               moves.push({ r: nr, c: nc });
             }
-            break; // path blocked
+            break;
           }
-          step++;
+          nr += d.r;
+          nc += d.c;
         }
       }
       break;
     }
 
     case 'c': {
-      // Cannon: orthogonal movement like chariot, captures by jumping over exactly 1 piece
+      // Cannon moves orthogonally, jumps over exactly one screen to capture
       const dirs = [
-        [-1, 0],
-        [1, 0],
-        [0, -1],
-        [0, 1],
+        { r: -1, c: 0 },
+        { r: 1, c: 0 },
+        { r: 0, c: -1 },
+        { r: 0, c: 1 },
       ];
-      for (const [dr, dc] of dirs) {
-        let step = 1;
-        let jumped = false;
-        while (true) {
-          const nr = r + dr * step;
-          const nc = c + dc * step;
-          if (!isInsideBoard(nr, nc)) break;
+      for (const d of dirs) {
+        let nr = r + d.r;
+        let nc = c + d.c;
+        let screenFound = false;
+
+        while (nr >= 0 && nr <= 9 && nc >= 0 && nc <= 8) {
           const target = board[nr][nc];
-          if (!jumped) {
+          if (!screenFound) {
             if (!target) {
-              moves.push({ r: nr, c: nc }); // regular move
+              moves.push({ r: nr, c: nc });
             } else {
-              jumped = true; // found screen
+              screenFound = true;
             }
           } else {
-            // Already jumped over one piece, looking for enemy piece to capture
             if (target) {
               if (target.side !== side) {
-                moves.push({ r: nr, c: nc }); // capture!
+                moves.push({ r: nr, c: nc });
               }
-              break; // cannon can only jump 1 piece
+              break;
             }
           }
-          step++;
+          nr += d.r;
+          nc += d.c;
         }
       }
       break;
     }
 
     case 'p': {
-      // Soldier / Pawn
-      if (side === 'red') {
-        // Moves forward (r - 1)
-        const forwardR = r - 1;
-        if (forwardR >= 0) {
-          const target = board[forwardR][c];
-          if (!target || target.side !== side) {
-            moves.push({ r: forwardR, c });
-          }
+      // Soldier/Pawn moves forward 1 square; across river can also move sideways
+      const forward = side === 'red' ? -1 : 1;
+      const crossedRiver = side === 'red' ? r <= 4 : r >= 5;
+
+      const forwardR = r + forward;
+      if (forwardR >= 0 && forwardR <= 9) {
+        const target = board[forwardR][c];
+        if (!target || target.side !== side) {
+          moves.push({ r: forwardR, c });
         }
-        // Crossed river (r <= 4): can move left or right
-        if (r <= 4) {
-          for (const dc of [-1, 1]) {
-            const nc = c + dc;
-            if (nc >= 0 && nc <= 8) {
-              const target = board[r][nc];
-              if (!target || target.side !== side) {
-                moves.push({ r, c: nc });
-              }
-            }
-          }
-        }
-      } else {
-        // Black: moves forward (r + 1)
-        const forwardR = r + 1;
-        if (forwardR <= 9) {
-          const target = board[forwardR][c];
-          if (!target || target.side !== side) {
-            moves.push({ r: forwardR, c });
-          }
-        }
-        // Crossed river (r >= 5): can move left or right
-        if (r >= 5) {
-          for (const dc of [-1, 1]) {
-            const nc = c + dc;
-            if (nc >= 0 && nc <= 8) {
-              const target = board[r][nc];
-              if (!target || target.side !== side) {
-                moves.push({ r, c: nc });
-              }
+      }
+
+      if (crossedRiver) {
+        for (const dc of [-1, 1]) {
+          const nc = c + dc;
+          if (nc >= 0 && nc <= 8) {
+            const target = board[r][nc];
+            if (!target || target.side !== side) {
+              moves.push({ r, c: nc });
             }
           }
         }
@@ -360,28 +364,60 @@ export function getPseudoMoves(board: BoardState, r: number, c: number): Positio
   return moves;
 }
 
-// Check if given side is currently in check
-export function isSideInCheck(board: BoardState, side: Side): boolean {
-  const kingPos = findKingPosition(board, side);
-  if (!kingPos) return true; // king captured
+export function areKingsFacing(board: BoardState): boolean {
+  let redK: Position | null = null;
+  let blackK: Position | null = null;
 
-  // Check if kings are facing directly
-  if (areKingsFacing(board)) {
-    return true;
+  for (let r = 0; r <= 9; r++) {
+    for (let c = 0; c <= 8; c++) {
+      const p = board[r][c];
+      if (p && p.type === 'k') {
+        if (p.side === 'red') redK = { r, c };
+        else blackK = { r, c };
+      }
+    }
   }
 
-  const oppSide: Side = side === 'red' ? 'black' : 'red';
+  if (!redK || !blackK) return false;
+  if (redK.c !== blackK.c) return false;
 
-  // Check all opponent pieces to see if any pseudo move lands on kingPos
-  for (let r = 0; r < 10; r++) {
-    for (let c = 0; c < 9; c++) {
-      const piece = board[r][c];
-      if (piece && piece.side === oppSide) {
-        const moves = getPseudoMoves(board, r, c);
-        for (const m of moves) {
-          if (m.r === kingPos.r && m.c === kingPos.c) {
-            return true;
-          }
+  // Check if pieces in between
+  const col = redK.c;
+  const minR = Math.min(redK.r, blackK.r) + 1;
+  const maxR = Math.max(redK.r, blackK.r);
+
+  for (let r = minR; r < maxR; r++) {
+    if (board[r][col]) return false;
+  }
+
+  return true;
+}
+
+export function isSideInCheck(board: BoardState, side: Side): boolean {
+  if (areKingsFacing(board)) return true;
+
+  let kingPos: Position | null = null;
+  for (let r = 0; r <= 9; r++) {
+    for (let c = 0; c <= 8; c++) {
+      const p = board[r][c];
+      if (p && p.type === 'k' && p.side === side) {
+        kingPos = { r, c };
+        break;
+      }
+    }
+    if (kingPos) break;
+  }
+
+  if (!kingPos) return true;
+
+  const oppSide: Side = side === 'red' ? 'black' : 'red';
+  for (let r = 0; r <= 9; r++) {
+    for (let c = 0; c <= 8; c++) {
+      const p = board[r][c];
+      if (p && p.side === oppSide) {
+        const moves = getPseudoLegalMoves(board, r, c);
+        if (moves.some((m) => m.r === kingPos!.r && m.c === kingPos!.c)) {
+          return true;
         }
       }
     }
@@ -390,143 +426,58 @@ export function isSideInCheck(board: BoardState, side: Side): boolean {
   return false;
 }
 
-// Generate valid legal moves that don't result in self-check
 export function getLegalMoves(board: BoardState, r: number, c: number): Position[] {
   const piece = board[r][c];
   if (!piece) return [];
 
-  const pseudoMoves = getPseudoMoves(board, r, c);
-  const legalMoves: Position[] = [];
+  const pseudoMoves = getPseudoLegalMoves(board, r, c);
+  const legal: Position[] = [];
 
-  for (const move of pseudoMoves) {
-    // Simulate move
-    const newBoard = cloneBoard(board);
-    newBoard[move.r][move.c] = newBoard[r][c];
-    newBoard[r][c] = null;
+  for (const m of pseudoMoves) {
+    const testBoard = cloneBoard(board);
+    testBoard[m.r][m.c] = piece;
+    testBoard[r][c] = null;
 
-    // Must not leave own side in check and kings must not face each other
-    if (!isSideInCheck(newBoard, piece.side) && !areKingsFacing(newBoard)) {
-      legalMoves.push(move);
+    if (!isSideInCheck(testBoard, piece.side) && !areKingsFacing(testBoard)) {
+      legal.push(m);
     }
   }
 
-  return legalMoves;
+  return legal;
 }
 
-// Check if current side has any legal moves available
 export function hasAnyLegalMoves(board: BoardState, side: Side): boolean {
-  for (let r = 0; r < 10; r++) {
-    for (let c = 0; c < 9; c++) {
-      const piece = board[r][c];
-      if (piece && piece.side === side) {
-        const legal = getLegalMoves(board, r, c);
-        if (legal.length > 0) return true;
+  for (let r = 0; r <= 9; r++) {
+    for (let c = 0; c <= 8; c++) {
+      const p = board[r][c];
+      if (p && p.side === side) {
+        const moves = getLegalMoves(board, r, c);
+        if (moves.length > 0) return true;
       }
     }
   }
   return false;
 }
 
-export function getPieceNameVi(piece: Piece): string {
-  if (piece.side === 'red') {
-    switch (piece.type) {
-      case 'k': return 'Tướng';
-      case 'a': return 'Sĩ';
-      case 'b': return 'Tượng';
-      case 'n': return 'Mã';
-      case 'r': return 'Xe';
-      case 'c': return 'Pháo';
-      case 'p': return 'Binh';
-    }
-  } else {
-    switch (piece.type) {
-      case 'k': return 'Tướng';
-      case 'a': return 'Sĩ';
-      case 'b': return 'Tượng';
-      case 'n': return 'Mã';
-      case 'r': return 'Xe';
-      case 'c': return 'Pháo';
-      case 'p': return 'Tốt';
-    }
-  }
-}
-
-export function getPieceCharVi(piece: Piece): string {
-  if (piece.side === 'red') {
-    switch (piece.type) {
-      case 'k': return '帥'; // Soái
-      case 'a': return '仕'; // Sĩ
-      case 'b': return '相'; // Tượng (Đỏ)
-      case 'n': return '傌'; // Mã (Đỏ)
-      case 'r': return '俥'; // Xe (Đỏ)
-      case 'c': return '炮'; // Pháo (Đỏ)
-      case 'p': return '兵'; // Binh (Đỏ)
-    }
-  } else {
-    switch (piece.type) {
-      case 'k': return '將'; // Tướng
-      case 'a': return '士'; // Sĩ
-      case 'b': return '象'; // Tượng (Đen)
-      case 'n': return '馬'; // Mã (Đen)
-      case 'r': return '車'; // Xe (Đen)
-      case 'c': return '砲'; // Pháo (Đen)
-      case 'p': return '卒'; // Tốt (Đen)
-    }
-  }
-}
-
-export function getSkillTypeForPiece(type: PieceType): SkillFxType {
-  switch (type) {
-    case 'r': return 'thunder';   // Xe: Cửu Thiên Lôi Đình
-    case 'c': return 'fire';      // Pháo: Tam Muội Chân Hỏa
-    case 'n': return 'sword';     // Mã: Thanh Phong Phi Kiếm
-    case 'k': return 'tai-chi';   // Tướng: Thái Cực Bát Quái
-    case 'a':
-    case 'b': return 'shield';    // Sĩ, Tượng: Huyền Vũ Hộ Giáp / Băng Thuẫn
-    case 'p': return 'slash';     // Tốt/Binh: Huyết Sát Đột Kích
-    default: return 'sword';
-  }
-}
-
-export function getSkillNameVi(type: SkillFxType): string {
-  switch (type) {
-    case 'thunder': return '⚡ Cửu Thiên Lôi Đình';
-    case 'fire': return '🔥 Tam Muội Chân Hỏa';
-    case 'sword': return '⚔️ Vạn Kiếm Quy Tông';
-    case 'tai-chi': return '☯️ Bát Quái Trấn Thiên';
-    case 'shield': return '🛡️ Huyền Vũ Linh Thuẫn';
-    case 'slash': return '🗡️ Huyết Sát Phá Giáp';
-  }
-}
-
 export function generateMoveNotation(board: BoardState, from: Position, to: Position): string {
   const piece = board[from.r][from.c];
   if (!piece) return '';
 
-  const name = getPieceNameVi(piece);
-  // Vietnamese column standard: Red counts 1..9 from right to left (col 8 is 1, col 0 is 9).
-  // Black counts 1..9 from right to left (col 0 is 1, col 8 is 9).
-  const startCol = piece.side === 'red' ? 9 - from.c : from.c + 1;
-  const destCol = piece.side === 'red' ? 9 - to.c : to.c + 1;
+  const name = getPieceCharVi(piece.type, piece.side);
+  const fromCol = piece.side === 'red' ? 9 - from.c : from.c + 1;
+  const toCol = piece.side === 'red' ? 9 - to.c : to.c + 1;
 
   if (from.r === to.r) {
-    // Horizontal move (Bình)
-    return `${name} ${startCol} bình ${destCol}`;
-  } else if (piece.side === 'red' ? to.r < from.r : to.r > from.r) {
-    // Forward move (Tiến)
-    if (piece.type === 'n' || piece.type === 'b' || piece.type === 'a') {
-      return `${name} ${startCol} tiến ${destCol}`;
-    } else {
-      const steps = Math.abs(to.r - from.r);
-      return `${name} ${startCol} tiến ${steps}`;
-    }
+    return `${name} ${fromCol} Bình ${toCol}`;
+  }
+
+  const isAdvancing = piece.side === 'red' ? to.r < from.r : to.r > from.r;
+  const action = isAdvancing ? 'Tiến' : 'Thoái';
+
+  if (['r', 'c', 'p', 'k'].includes(piece.type)) {
+    const diff = Math.abs(to.r - from.r);
+    return `${name} ${fromCol} ${action} ${diff}`;
   } else {
-    // Backward move (Thoái)
-    if (piece.type === 'n' || piece.type === 'b' || piece.type === 'a') {
-      return `${name} ${startCol} thoái ${destCol}`;
-    } else {
-      const steps = Math.abs(to.r - from.r);
-      return `${name} ${startCol} thoái ${steps}`;
-    }
+    return `${name} ${fromCol} ${action} ${toCol}`;
   }
 }

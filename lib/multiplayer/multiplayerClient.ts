@@ -1,13 +1,85 @@
 import { UserAccount } from '../storage/userStore';
 import { GamePlayer, GameRoom, Move, BoardState, Side, Position } from '../xiangqi/types';
-import { ChatMessage, ServerGameRoomState } from '../server/multiplayerStore';
+import { ChatMessage, ServerGameRoomState, RealtimeEvent } from '../server/multiplayerStore';
 import { getRealmByLevel, DAOIST_TITLES } from '../cultivation/realms';
+
+export type { ChatMessage, ServerGameRoomState, RealtimeEvent };
 
 export interface LobbySyncResult {
   onlineUsers: UserAccount[];
   rooms: GameRoom[];
   chatMessages: ChatMessage[];
   sessionAccount: UserAccount | null;
+}
+
+type RealtimeListener = (event: RealtimeEvent) => void;
+const clientSubscribers = new Set<RealtimeListener>();
+let activeEventSource: EventSource | null = null;
+let reconnectTimer: NodeJS.Timeout | null = null;
+
+export function subscribeRealtimeStream(listener: RealtimeListener): () => void {
+  clientSubscribers.add(listener);
+
+  if (typeof window !== 'undefined' && !activeEventSource) {
+    initEventSource();
+  }
+
+  return () => {
+    clientSubscribers.delete(listener);
+    if (clientSubscribers.size === 0 && activeEventSource) {
+      activeEventSource.close();
+      activeEventSource = null;
+    }
+  };
+}
+
+function initEventSource() {
+  if (typeof window === 'undefined') return;
+  if (activeEventSource) {
+    try {
+      activeEventSource.close();
+    } catch {
+      // ignore
+    }
+  }
+
+  try {
+    const es = new EventSource('/api/multiplayer/stream');
+    activeEventSource = es;
+
+    es.onmessage = (e) => {
+      try {
+        if (!e.data || e.data.startsWith(':')) return;
+        const parsed = JSON.parse(e.data) as RealtimeEvent;
+        if (parsed && parsed.type) {
+          clientSubscribers.forEach((fn) => {
+            try {
+              fn(parsed);
+            } catch {
+              // ignore
+            }
+          });
+        }
+      } catch {
+        // ignore parse error
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+      activeEventSource = null;
+      if (!reconnectTimer) {
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          if (clientSubscribers.size > 0) {
+            initEventSource();
+          }
+        }, 3000);
+      }
+    };
+  } catch {
+    // EventSource fallback
+  }
 }
 
 export async function syncLobbyData(user?: UserAccount): Promise<LobbySyncResult | null> {
@@ -42,7 +114,7 @@ export async function syncLobbyData(user?: UserAccount): Promise<LobbySyncResult
       onlineUsers: data.onlineUsers || [],
       rooms: data.rooms || [],
       chatMessages: data.chatMessages || [],
-      sessionAccount: data.sessionAccount || null,
+      sessionAccount: null,
     };
   } catch {
     return null;
@@ -63,6 +135,7 @@ export async function sendWorldChat(user: UserAccount, message: string): Promise
         realm,
         title,
         avatarUrl: user.avatarUrl,
+        frameId: user.selectedFrameId || '',
         message,
       }),
     });

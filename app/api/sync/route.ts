@@ -18,50 +18,19 @@ import {
   replaceTitlesInServer,
   updateSystemConfigInServer,
   saveServerCloudStore,
-} from '../../../lib/server/cloudStore';
-import { encryptData, decryptData, EncryptedPayload } from '../../../lib/server/encryptedDb';
+} from '@/lib/server/cloudStore';
+import { encryptData, decryptData, EncryptedPayload } from '@/lib/server/encryptedDb';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
     const store = loadServerCloudStore();
-    const url = new URL(req.url);
-    const username = url.searchParams.get('username');
-    const userId = url.searchParams.get('userId');
 
-    if (username) {
-      const acc = store.accounts.find((a) => a.username.toLowerCase() === username.toLowerCase());
-      return NextResponse.json({
-        success: true,
-        account: acc || null,
-        customFrames: store.customFrames,
-        dharmaIdols: store.dharmaIdols,
-        customArtifacts: store.customArtifacts,
-        customTitles: store.customTitles,
-        systemConfig: store.systemConfig,
-        lastUpdated: store.lastUpdated,
-      });
-    }
-
-    if (userId) {
-      const acc = store.accounts.find((a) => a.id === userId);
-      return NextResponse.json({
-        success: true,
-        account: acc || null,
-        customFrames: store.customFrames,
-        dharmaIdols: store.dharmaIdols,
-        customArtifacts: store.customArtifacts,
-        customTitles: store.customTitles,
-        systemConfig: store.systemConfig,
-        lastUpdated: store.lastUpdated,
-      });
-    }
-
-    // Return all data
+    // Bảo mật: Không lưu trữ hoặc trả về danh sách đạo tịch cá nhân trên máy chủ
     return NextResponse.json({
       success: true,
-      accounts: store.accounts,
+      accounts: [],
       customFrames: store.customFrames,
       dharmaIdols: store.dharmaIdols,
       customArtifacts: store.customArtifacts,

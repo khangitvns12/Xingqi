@@ -1,33 +1,9 @@
-import { DAOIST_TITLES } from '../cultivation/realms';
-
-export interface UserStats {
-  totalMatches: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  winStreak: number;
-  maxWinStreak: number;
-  highestElo: number;
-}
-
-export const DEFAULT_USER_STATS: UserStats = {
-  totalMatches: 0,
-  wins: 0,
-  draws: 0,
-  losses: 0,
-  winStreak: 0,
-  maxWinStreak: 0,
-  highestElo: 1200,
-};
-
 export interface UserAccount {
   id: string;
   username: string;
   password?: string;
-  role?: 'admin' | 'user';
-  isGuest?: boolean;
-  daoName: string; // Đạo Hiệu
-  sect: string;    // Tông Môn
+  daoName: string;
+  sect: string;
   avatarUrl: string;
   elo: number;
   realmLevel: number;
@@ -36,104 +12,133 @@ export interface UserAccount {
   pills: Record<string, number>;
   selectedTitleId: string;
   selectedAvatarId: string;
-  selectedFrameId?: string; // Custom frame id
-  unlockedFrameIds?: string[];
-  selectedDharmaId?: string; // Pháp Tướng id (supports GIF/WebP)
-  unlockedDharmaIds?: string[];
-  selectedArtifactId?: string; // Pháp Bảo id (supports GIF/WebP)
-  unlockedArtifactIds?: string[];
+  selectedFrameId?: string;
+  selectedDharmaId?: string;
+  selectedArtifactId?: string;
   unlockedTitleIds: string[];
   unlockedAvatarIds: string[];
+  unlockedFrameIds: string[];
+  unlockedDharmaIds?: string[];
+  unlockedArtifactIds?: string[];
+  isOnline?: boolean;
+  lastActive: number;
+  updatedAt: number;
+  role?: 'admin' | 'user';
+  isGuest?: boolean;
   isBanned?: boolean;
   banReason?: string;
-  isOnline?: boolean;
-  lastActive?: number;
-  updatedAt?: number;
-  stats: UserStats;
+  stats: {
+    totalMatches: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    winStreak: number;
+    maxWinStreak: number;
+    highestElo: number;
+  };
   createdAt: number;
 }
 
 export interface SystemConfig {
-  id: string;
-  defaultAvatarUrl: string;
-  defaultAvatarId: string;
+  id?: string;
+  lastUpdated?: number;
+  defaultSpiritStones: number;
+  winRewardStones: number;
+  drawRewardStones: number;
+  lossRewardStones: number;
+  winExp: number;
+  drawExp: number;
+  lossExp: number;
+  eloBaseK: number;
+  maintenanceMode: boolean;
+  welcomeMessage: string;
+  allowGuestMode: boolean;
+  defaultAvatarUrl?: string;
+  defaultAvatarId?: string;
   defaultFrameId?: string;
   defaultDharmaId?: string;
   defaultArtifactId?: string;
-  defaultTitleId: string;
-  defaultSpiritStones: number;
-  defaultElo: number;
-  defaultRealmLevel: number;
-  defaultPills: Record<string, number>;
-  lastUpdated: number;
+  defaultTitleId?: string;
+  defaultElo?: number;
+  defaultRealmLevel?: number;
+  defaultPills?: Record<string, number>;
 }
 
 export const DEFAULT_SYSTEM_CONFIG: SystemConfig = {
   id: 'system_config',
+  lastUpdated: 1700000000000,
+  defaultSpiritStones: 500,
+  winRewardStones: 50,
+  drawRewardStones: 15,
+  lossRewardStones: 5,
+  winExp: 150,
+  drawExp: 50,
+  lossExp: 30,
+  eloBaseK: 32,
+  maintenanceMode: false,
+  welcomeMessage: 'Chào mừng các vị đạo hữu giá lâm Tiên Kỳ Đạo!',
+  allowGuestMode: true,
   defaultAvatarUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80',
   defaultAvatarId: 'av_1',
-  defaultFrameId: '',
-  defaultDharmaId: '',
-  defaultArtifactId: '',
+  defaultFrameId: undefined,
+  defaultDharmaId: undefined,
+  defaultArtifactId: undefined,
   defaultTitleId: 'title_1',
-  defaultSpiritStones: 200,
   defaultElo: 1200,
   defaultRealmLevel: 1,
-  defaultPills: { 'Tụ Khí Đan': 3 },
-  lastUpdated: 1700000000000,
+  defaultPills: { 'Tụ Khí Đan': 3, 'Trúc Cơ Đan': 1 },
 };
 
 export const ADMIN_USER: UserAccount = {
   id: 'user_admin',
   username: 'admin',
-  password: 'admin123',
+  password: '123',
   role: 'admin',
-  daoName: 'Thiên Đạo Chấp Pháp (Admin)',
-  sect: 'Thiên Đạo Chấp Pháp Các',
-  avatarUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=250&auto=format&fit=crop&q=80',
-  elo: 3000,
+  daoName: 'Thái Thượng Trưởng Lão',
+  sect: 'Tiên Giới Chấp Pháp Viện',
+  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  elo: 2200,
   realmLevel: 10,
   exp: 99999,
-  spiritStones: 999999,
+  spiritStones: 88888,
   pills: {
     'Tụ Khí Đan': 99,
-    'Trúc Cơ Đan': 99,
-    'Hàng Long Kim Đan': 99,
-    'Cửu Chuyển Hoàn Hồn Đan': 99,
+    'Trúc Cơ Đan': 50,
+    'Kim Đan Thần Đan': 20,
   },
   selectedTitleId: 'title_10',
   selectedAvatarId: 'av_10',
   selectedFrameId: 'frame_celestial_gold',
-  selectedDharmaId: 'dharma_chaos_emperor',
-  selectedArtifactId: 'art_dong_hoang_chung',
-  unlockedTitleIds: DAOIST_TITLES.map((t) => t.id),
-  unlockedAvatarIds: ['av_1', 'av_2', 'av_3', 'av_4', 'av_5', 'av_6', 'av_7', 'av_8', 'av_9', 'av_10'],
+  selectedDharmaId: 'dharma_sword_god',
+  selectedArtifactId: 'art_tru_tien_kiem',
+  unlockedTitleIds: ['title_1', 'title_2', 'title_3', 'title_4', 'title_5', 'title_10'],
+  unlockedAvatarIds: ['av_1', 'av_2', 'av_3', 'av_4', 'av_10'],
   unlockedFrameIds: ['frame_celestial_gold', 'frame_purple_thunder', 'frame_emerald_lotus', 'frame_phoenix_fire', 'frame_ice_crystal'],
-  unlockedDharmaIds: ['dharma_chaos_emperor', 'dharma_sword_god', 'dharma_nine_tails', 'dharma_dragon_emperor', 'dharma_asura'],
-  unlockedArtifactIds: ['art_dong_hoang_chung', 'art_chu_tien_kiem', 'art_bat_quai_kinh', 'art_ngoc_tinh_binh'],
+  unlockedDharmaIds: ['dharma_sword_god', 'dharma_buddha_gold', 'dharma_dragon_emperor', 'dharma_nine_tails'],
+  unlockedArtifactIds: ['art_tru_tien_kiem', 'art_dong_hoang_chung', 'art_bat_quai_kinh'],
   isOnline: true,
   lastActive: 1700000000000,
   updatedAt: 1700000000000,
   stats: {
-    totalMatches: 999,
-    wins: 990,
-    draws: 8,
-    losses: 1,
-    winStreak: 250,
-    maxWinStreak: 250,
-    highestElo: 3000,
+    totalMatches: 300,
+    wins: 280,
+    draws: 15,
+    losses: 5,
+    winStreak: 30,
+    maxWinStreak: 45,
+    highestElo: 2350,
   },
   createdAt: 1700000000000,
 };
 
 export const DEFAULT_USER: UserAccount = {
   id: 'user_main',
-  username: 'daohuuxian',
+  username: 'bach_van_cu_si',
   password: '123',
   role: 'user',
-  daoName: 'Thanh Hư Đạo Nhân',
-  sect: 'Cửu Châu Tiên Môn',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  daoName: 'Bạch Vân Cư Sĩ',
+  sect: 'Bạch Vân Tông',
+  avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
   elo: 1250,
   realmLevel: 2,
   exp: 420,
@@ -209,73 +214,126 @@ export const BOT_USER_IDS = new Set([
   'user_bang_phach',
   'user_bach_van',
   'user_tu_tieu',
-  'user_test_persistence',
+  'ai_bot',
 ]);
 
 export const SEED_ACCOUNTS: UserAccount[] = [
   ADMIN_USER,
   DEFAULT_USER,
+  {
+    id: 'user_kiem_ma',
+    username: 'doc_co_kiem_ma',
+    role: 'user',
+    daoName: 'Độc Cô Cầu Bại',
+    sect: 'Vạn Kiếm Quy Tông',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    elo: 1950,
+    realmLevel: 8,
+    exp: 45000,
+    spiritStones: 12500,
+    pills: { 'Hóa Thần Đan': 3 },
+    selectedTitleId: 'title_8',
+    selectedAvatarId: 'av_8',
+    selectedFrameId: 'frame_purple_thunder',
+    selectedDharmaId: 'dharma_sword_god',
+    unlockedTitleIds: ['title_8'],
+    unlockedAvatarIds: ['av_8'],
+    unlockedFrameIds: ['frame_purple_thunder'],
+    unlockedDharmaIds: ['dharma_sword_god'],
+    unlockedArtifactIds: [],
+    lastActive: 1700000000000,
+    updatedAt: 1700000000000,
+    stats: {
+      totalMatches: 180,
+      wins: 145,
+      draws: 15,
+      losses: 20,
+      winStreak: 12,
+      maxWinStreak: 18,
+      highestElo: 2050,
+    },
+    createdAt: 1700000000000,
+  },
+  {
+    id: 'user_bang_phach',
+    username: 'bang_phach_tien_tu',
+    role: 'user',
+    daoName: 'Băng Phách Tiên Tử',
+    sect: 'Hàn Băng Cung',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    elo: 1680,
+    realmLevel: 5,
+    exp: 18000,
+    spiritStones: 4500,
+    pills: { 'Ngưng Anh Đan': 2 },
+    selectedTitleId: 'title_5',
+    selectedAvatarId: 'av_5',
+    selectedFrameId: 'frame_ice_crystal',
+    unlockedTitleIds: ['title_5'],
+    unlockedAvatarIds: ['av_5'],
+    unlockedFrameIds: ['frame_ice_crystal'],
+    unlockedDharmaIds: [],
+    unlockedArtifactIds: [],
+    lastActive: 1700000000000,
+    updatedAt: 1700000000000,
+    stats: {
+      totalMatches: 95,
+      wins: 68,
+      draws: 9,
+      losses: 18,
+      winStreak: 5,
+      maxWinStreak: 9,
+      highestElo: 1720,
+    },
+    createdAt: 1700000000000,
+  },
 ];
 
-export const STORAGE_KEY = 'tien_ky_dao_user_v1';
-export const ACCOUNTS_STORAGE_KEY = 'tien_ky_dao_accounts_v1';
-export const SYSTEM_CONFIG_KEY = 'tien_ky_system_config_v1';
-export const KICKED_KEY = 'tien_ky_kicked_users_v1';
+export const STORAGE_KEY = 'tien_ky_dao_user_profile_v2';
+export const ACCOUNTS_STORAGE_KEY = 'tien_ky_dao_accounts_list_v2';
+export const SYSTEM_CONFIG_KEY = 'tien_ky_dao_system_config_v2';
+export const KICKED_KEY = 'tien_ky_dao_user_kicked_v2';
 
 export function sanitizeUserAccount(raw: any): UserAccount {
-  if (!raw || typeof raw !== 'object') {
-    return { ...DEFAULT_USER };
-  }
-  const rawStats = raw.stats || {};
-  const wins = Number(rawStats.wins) || 0;
-  const draws = Number(rawStats.draws) || 0;
-  const losses = Number(rawStats.losses) || 0;
-  const computedTotal =
-    typeof rawStats.totalMatches === 'number'
-      ? rawStats.totalMatches
-      : wins + draws + losses;
-  const elo = typeof raw.elo === 'number' ? raw.elo : 1200;
-
-  const stats: UserStats = {
-    totalMatches: computedTotal,
-    wins,
-    draws,
-    losses,
-    winStreak: Number(rawStats.winStreak) || 0,
-    maxWinStreak: Number(rawStats.maxWinStreak) || (Number(rawStats.winStreak) || 0),
-    highestElo: Math.max(Number(rawStats.highestElo) || elo, elo),
-  };
-
+  if (!raw) return { ...GUEST_USER };
   return {
     id: raw.id || 'user_' + Date.now(),
-    username: raw.username || 'daohuuxian',
+    username: raw.username || 'vo_danh',
     password: raw.password || '',
     role: raw.role === 'admin' ? 'admin' : 'user',
-    isGuest: Boolean(raw.isGuest),
-    daoName: raw.daoName || 'Kỳ Hữu Vô Danh',
-    sect: raw.sect || 'Tán Tu Phàm Giới',
-    avatarUrl: raw.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    elo,
+    daoName: raw.daoName || 'Vô Danh Tu Sĩ',
+    sect: raw.sect || 'Tán Tu Cửu Châu',
+    avatarUrl: raw.avatarUrl || GUEST_USER.avatarUrl,
+    elo: typeof raw.elo === 'number' ? raw.elo : 1000,
     realmLevel: typeof raw.realmLevel === 'number' ? raw.realmLevel : 1,
     exp: typeof raw.exp === 'number' ? raw.exp : 0,
-    spiritStones: typeof raw.spiritStones === 'number' ? raw.spiritStones : 200,
-    pills: raw.pills && typeof raw.pills === 'object' ? raw.pills : { 'Tụ Khí Đan': 3 },
+    spiritStones: typeof raw.spiritStones === 'number' ? raw.spiritStones : 100,
+    pills: raw.pills && typeof raw.pills === 'object' ? raw.pills : {},
     selectedTitleId: raw.selectedTitleId || 'title_1',
     selectedAvatarId: raw.selectedAvatarId || 'av_1',
     selectedFrameId: raw.selectedFrameId || '',
-    unlockedFrameIds: Array.isArray(raw.unlockedFrameIds) ? raw.unlockedFrameIds : [],
     selectedDharmaId: raw.selectedDharmaId || '',
-    unlockedDharmaIds: Array.isArray(raw.unlockedDharmaIds) ? raw.unlockedDharmaIds : [],
     selectedArtifactId: raw.selectedArtifactId || '',
-    unlockedArtifactIds: Array.isArray(raw.unlockedArtifactIds) ? raw.unlockedArtifactIds : [],
     unlockedTitleIds: Array.isArray(raw.unlockedTitleIds) ? raw.unlockedTitleIds : ['title_1'],
     unlockedAvatarIds: Array.isArray(raw.unlockedAvatarIds) ? raw.unlockedAvatarIds : ['av_1'],
+    unlockedFrameIds: Array.isArray(raw.unlockedFrameIds) ? raw.unlockedFrameIds : [],
+    unlockedDharmaIds: Array.isArray(raw.unlockedDharmaIds) ? raw.unlockedDharmaIds : [],
+    unlockedArtifactIds: Array.isArray(raw.unlockedArtifactIds) ? raw.unlockedArtifactIds : [],
+    isOnline: Boolean(raw.isOnline),
+    isGuest: Boolean(raw.isGuest),
     isBanned: Boolean(raw.isBanned),
     banReason: raw.banReason || '',
-    isOnline: Boolean(raw.isOnline),
-    lastActive: raw.lastActive || Date.now(),
-    updatedAt: raw.updatedAt || Date.now(),
-    stats,
-    createdAt: raw.createdAt || Date.now(),
+    lastActive: typeof raw.lastActive === 'number' ? raw.lastActive : Date.now(),
+    updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now(),
+    createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now(),
+    stats: {
+      totalMatches: raw.stats?.totalMatches || 0,
+      wins: raw.stats?.wins || 0,
+      draws: raw.stats?.draws || 0,
+      losses: raw.stats?.losses || 0,
+      winStreak: raw.stats?.winStreak || 0,
+      maxWinStreak: raw.stats?.maxWinStreak || 0,
+      highestElo: raw.stats?.highestElo || (raw.elo || 1000),
+    },
   };
 }
